@@ -37,7 +37,7 @@ function handleKeypadInput()
         local event, side, x, y = os.pullEvent("monitor_touch")
         local value = math.floor((y - 2) / 3) * 3 + math.ceil((x - 1) / 8)
         if value >= 1 and value <= 12 then
-            local label = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}[value]
+            local label = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}
             if label == "Enter" then
                 return input
             elseif label == "Clear" then
