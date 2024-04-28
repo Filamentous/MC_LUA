@@ -18,8 +18,8 @@ function drawButton(x, y, width, height, text, bgColor)
         monitor.setCursorPos(x, y + i)
         monitor.write(string.rep(" ", width))  -- Draw the button background
     end
-    local textX = x + (width // 2) - (#text // 2)
-    local textY = y + (height // 2)
+    local textX = x + (width / 2) - (#text / 2)
+    local textY = y + (height / 2)
     monitor.setCursorPos(textX, textY)
     monitor.write(text)
 end
