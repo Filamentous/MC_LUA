@@ -43,25 +43,24 @@ function drawCardInputScreen()
     drawButton(2, 8, 28, 3, "Submit", colors.red)
 end
 
--- Handle touch events
 function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if y >= 2 and y <= 4 then
-            if x >= 2 and x <= 29 then
-                return "new_card"
-            end
-        elseif y >= 6 and y <= 8 then
-            if x >= 2 and x <= 29 then
-                return "enter_card"
-            end
-        elseif y >= 8 and y <= 10 then
-            if x >= 2 and x <= 29 then
-                return "submit"
-            end
+        -- Check coordinates for "New Card" button
+        if x >= 2 and x <= 29 and y >= 2 and y <= 4 then
+            return "new_card"
+        end
+        -- Check coordinates for "Enter Card Number" button
+        if x >= 2 and x <= 29 and y >= 6 and y <= 8 then
+            return "enter_card"
+        end
+        -- Check coordinates for "Submit" button (if applicable to your GUI design)
+        if x >= 2 and x <= 29 and y >= 10 and y <= 12 then
+            return "submit"
         end
     end
 end
+
 
 -- Main server loop
 function main()
