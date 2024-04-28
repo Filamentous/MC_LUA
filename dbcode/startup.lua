@@ -1,6 +1,6 @@
 -- Database storage setup
 local balances = {}
-local authorizedID = 6  -- ID of the authorized teller computer
+local authorizedIDs = {6, 7}  -- IDs of authorized machines, including slot machine
 
 -- Load existing data
 if fs.exists("balances.txt") then
@@ -33,17 +33,25 @@ function writeToFile()
     file.close()
 end
 
+-- Function to check balance, used by slot machines
+function checkBalance(playerID)
+    return balances[playerID] or 0  -- Return 0 if no account exists
+end
+
 -- Server loop to handle requests
 function main()
     rednet.open("back")
     while true do
         local senderId, message, protocol = rednet.receive("databaseQuery")
-        if senderId == authorizedID then  -- Check if the sender is authorized
+        if table.contains(authorizedIDs, senderId) then  -- Check if the sender is authorized
             if message.type == "updateBalance" and message.playerID and message.amount then
                 updateBalance(message.playerID, message.amount)
             elseif message.type == "createNewCard" and message.playerID then
                 local success, response = createNewCard(message.playerID)
                 rednet.send(senderId, {success = success, response = response}, "databaseResponse")
+            elseif message.type == "checkBalance" and message.playerID then
+                local balance = checkBalance(message.playerID)
+                rednet.send(senderId, {balance = balance}, "databaseResponse")
             end
         else
             print("Unauthorized access attempt from ID " .. senderId)
