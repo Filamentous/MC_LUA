@@ -41,28 +41,31 @@ function handlePinPadInput()
     local pin = ""
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        -- Determine button based on coordinates
-        local row = math.floor((y - 4) / 4)
-        local col = (x - 2) / 10
-        local index = row * 3 + col + 1
-        if index >= 10 then index = index + 1 end -- Adjust index for bottom row buttons
-        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", ""}[index]
-        if y >= 16 then
-            if x <= 10 then
-                pin = "" -- Clear button
-            elseif x >= 22 then
-                return pin -- Enter button
-            end
+        print("Touched at x:", x, "y:", y)  -- Debug output
+
+        local row = math.ceil((y - 3) / 4)
+        local col = math.ceil((x - 1) / 10)
+        local index = (row - 1) * 3 + col
+        if index > 9 then index = index + 2 end -- Adjust for Clear and Enter buttons
+        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}[index]
+
+        print("Index:", index, "Key:", key)  -- Debug output
+
+        if key == "Clear" then
+            pin = "" -- Reset pin
+            monitor.setCursorPos(5, 19)
+            monitor.clearLine()
+        elseif key == "Enter" then
+            return pin -- Return pin if Enter is pressed
         elseif key ~= "" then
             pin = pin .. key
-            if #pin == 4 then return pin end -- Return pin if 4 digits are entered
+            monitor.setCursorPos(5, 19)
+            monitor.clearLine()
+            monitor.write(pin)
         end
-        -- Update the display to show the current pin
-        monitor.setCursorPos(5, 19)
-        monitor.clearLine()
-        monitor.write(pin)
     end
 end
+
 
 -- Touch event handling
 function handleTouchEvents()
