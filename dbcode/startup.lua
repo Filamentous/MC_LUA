@@ -9,6 +9,16 @@ if fs.exists("balances.txt") then
     file.close()
 end
 
+
+function table.contains(table, element)
+    for _, value in pairs(table) do
+        if value == element then
+            return true
+        end
+    end
+    return false
+end
+
 -- Function to update balance and write to file
 function updateBalance(playerID, amount)
     balances[playerID] = (balances[playerID] or 0) + amount
