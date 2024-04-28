@@ -49,8 +49,8 @@ function handlePinPadInput()
         local col = math.floor((x - 1) / 10)
         local index = row * 3 + col + 1
         if index > 9 then index = index + 3 end -- Adjust for bottom row buttons
-        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "", "Clear", "Enter"}[index]
-
+        local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}
+        local key = keys[index]
         -- Check if the key press was on a button
         if key == "Clear" then
             pin = "" -- Reset pin
