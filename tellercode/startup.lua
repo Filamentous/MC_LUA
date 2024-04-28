@@ -1,13 +1,11 @@
 local monitor = peripheral.wrap("top")
-local databaseID = 5
-local turtleID = 8
-local tellerMachineID = 6
+local databaseID = 5 -- The ID of your database computer
+local turtleID = 8 -- The ID of your turtle
 
 -- Basic utilities for drawing and interaction
-function drawButton(x, y, text, color)
-    local width = #text + 2
-    paintutils.drawFilledBox(x, y, x + width, y + 1, color)
-    monitor.setCursorPos(x + 1, y)
+function drawButton(x, y, width, height, text, color)
+    paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, color)
+    monitor.setCursorPos(x + (width - #text) // 2, y + height // 2)
     monitor.setTextColor(colors.white)
     monitor.write(text)
 end
@@ -18,86 +16,68 @@ function clearScreen()
     monitor.setCursorPos(1, 1)
 end
 
--- Draw the numeric keypad for card number input
-function drawKeypad()
+-- Main menu GUI
+function drawMainMenu()
     clearScreen()
-    local buttons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}
-    local y = 2
-    for i, button in ipairs(buttons) do
-        drawButton(2, y, button, colors.blue)
-        y = y + 2
-        if i % 3 == 0 then y = y + 1 end  -- Add a space every three buttons
-    end
+    drawButton(2, 2, 38, 5, "New Card", colors.green)
+    drawButton(2, 7, 38, 5, "Enter Card Number", colors.green)
+    drawButton(2, 12, 38, 5, "Deposit Items", colors.blue)
 end
 
--- Handling touch input for the numeric keypad
-function handleKeypadInput()
-    local label = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}
-    local input = ""
+-- Function to handle touch interactions
+function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        local value = math.floor((y - 2) / 3) * 3 + math.ceil((x - 1) / 8)
-        if value >= 1 and value <= 12 then
-            if label == "Enter" then
-                return input
-            elseif label == "Clear" then
-                input = ""
-                clearScreen()
-                drawKeypad()
-            else
-                input = input .. label
-                if #input == 4 then
-                    return input
-                end
-            end
+        if y >= 2 and y <= 5 then
+            return "new_card"
+        elseif y >= 7 and y <= 10 then
+            return "enter_card"
+        elseif y >= 12 and y <= 15 then
+            return "deposit_items"
         end
     end
 end
 
-function waitForItemDepositAndSend()
-    drawButton(2, 14, "Deposit Items", colors.green)
-    os.pullEvent("monitor_touch")  -- Wait for touch event to confirm deposit
+-- Activate turtle to collect and send item data
+function activateTurtle()
+    rednet.open("back")
     rednet.send(turtleID, {command = "activate"}, "turtleCommand")
+    rednet.close()
 end
 
-local itemValues = {
-    ["minecraft:diamond"] = 1,
-    ["minecraft:netherite_scrap"] = 4,
-    ["minecraft:netherite_ingot"] = 8
-}
-
--- Function to process received items and update the balance
+-- Function to receive item data from turtle and update database
 function receiveItemsData()
-    local senderId, items, protocol = rednet.receive("itemData")
-    if protocol == "itemData" and senderId == turtleID then  -- Ensure the data is from the turtle
+    local senderId, message, protocol = rednet.receive("itemData")
+    if protocol == "itemData" and senderId == turtleID then
+        -- Process received item data and update database
         local totalValue = 0
-        for _, item in ipairs(items) do
+        for _, item in ipairs(message) do
             if itemValues[item.name] then
                 totalValue = totalValue + (itemValues[item.name] * item.count)
             end
         end
 
-        -- Send the calculated value as a balance update to the database
         rednet.open("back")
         rednet.send(databaseID, {type = "updateBalance", amount = totalValue}, "databaseQuery")
         rednet.close()
-
-        -- Optionally, display the updated balance
-        monitor.clear()
-        monitor.setCursorPos(1, 1)
-        monitor.write("Balance updated by: " .. totalValue)
-        sleep(2)
-        drawMainMenu()
     end
 end
 
+-- Main function to run the teller machine
 function main()
-    rednet.open("back")
-    drawKeypad()
-    local cardNumber = handleKeypadInput()
-    -- Here would be the logic to check/create the card number via rednet
-    waitForItemDepositAndSend()
-    receiveItemsData()
+    drawMainMenu()
+    while true do
+        local action = handleTouchEvents()
+        if action == "new_card" then
+            -- Implement new card creation logic
+        elseif action == "enter_card" then
+            -- Implement card number entry logic
+        elseif action == "deposit_items" then
+            -- Wait for user to deposit items and press the button
+            activateTurtle()
+            receiveItemsData()
+        end
+    end
 end
 
-main()
+main()  -- Start the program
