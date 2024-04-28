@@ -25,6 +25,45 @@ function drawMainMenu()
     drawButton(2, 14, 30, 3, "Deposit Items", colors.blue)
 end
 
+function drawPinPad()
+    setupMonitor()
+    local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "Enter"}
+    local yPos = 4
+    for i, key in ipairs(keys) do
+        local xPos = 2 + ((i-1) % 3) * 10
+        if i > 9 then xPos = 12 end -- Adjust for bottom row
+        drawButton(xPos, yPos, 8, 3, key, colors.gray)
+        if i % 3 == 0 then yPos = yPos + 4 end
+    end
+end
+
+function handlePinPadInput()
+    local pin = ""
+    while true do
+        local event, side, x, y = os.pullEvent("monitor_touch")
+        -- Determine button based on coordinates
+        local row = math.floor((y - 4) / 4)
+        local col = (x - 2) / 10
+        local index = row * 3 + col + 1
+        if index >= 10 then index = index + 1 end -- Adjust index for bottom row buttons
+        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", ""}[index]
+        if y >= 16 then
+            if x <= 10 then
+                pin = "" -- Clear button
+            elseif x >= 22 then
+                return pin -- Enter button
+            end
+        elseif key ~= "" then
+            pin = pin .. key
+            if #pin == 4 then return pin end -- Return pin if 4 digits are entered
+        end
+        -- Update the display to show the current pin
+        monitor.setCursorPos(5, 19)
+        monitor.clearLine()
+        monitor.write(pin)
+    end
+end
+
 -- Touch event handling
 function handleTouchEvents()
     while true do
@@ -41,7 +80,8 @@ end
 
 -- Actions for each menu item
 function createNewCard()
-    local cardNumber = math.random(1000, 9999)  -- Simulated card number generation
+    drawPinPad()
+    local cardNumber = handlePinPadInput()
     rednet.open("back")
     rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
@@ -63,9 +103,8 @@ end
 
 function enterCardNumber()
     monitor.clear()
-    monitor.setCursorPos(1, 1)
-    monitor.write("Enter your card number:")
-    local cardNumber = tonumber(read())
+    drawPinPad()
+    local cardNumber = handlePinPadInput()
     rednet.open("back")
     rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
