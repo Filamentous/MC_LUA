@@ -2,6 +2,11 @@ local monitor = peripheral.wrap("top")
 local redstone = peripheral.wrap("bottom")
 local databaseID = 5  -- ID of your database computer
 local turtleID = 8    -- ID of your turtle
+local itemValues = {
+    ["minecraft:diamond"] = 1,
+    ["minecraft:netherite_scrap"] = 4,
+    ["minecraft:netherite_ingot"] = 8
+}
 
 -- Utility functions for GUI
 function setupMonitor()
@@ -88,6 +93,7 @@ end
 function createNewCard()
     drawPinPad()
     local cardNumber = handlePinPadInput()
+    monitor.write("pin: ", cardNumber)
     rednet.open("back")
     rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
@@ -130,19 +136,25 @@ function enterCardNumber()
     rednet.close()
 end
 
-function depositItemsAndActivateTurtle()
+function startDepositProcess()
+    rednet.open("back")
+    rednet.send(turtleID, {command = "activate"}, "turtleCommand")  -- Command to collect items
     monitor.clear()
     monitor.setCursorPos(1, 1)
-    monitor.write("Please deposit your items and press any key when done.")
-    os.pullEvent("key")  -- Wait for user to press a key after depositing items
-    rednet.open("back")
-    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
-    monitor.write("Processing items...")
-    local senderId, message, protocol = rednet.receive("itemData")
+    monitor.write("Waiting for items to be deposited...")
+
+    local senderId, items, protocol = rednet.receive("itemData")  -- Waiting for turtle to send item data
     if protocol == "itemData" and senderId == turtleID then
-        -- Assume code to process and update items here
-        monitor.setCursorPos(1, 2)
-        monitor.write("Items processed successfully.")
+        -- Calculate the total value of items
+        local totalValue = 0
+        for _, item in ipairs(items) do
+            if itemValues[item.name] then
+                totalValue += itemValues[item.name] * item.count
+            end
+        end
+        -- Update balance in the database
+        rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = pID}, "databaseQuery")
+        monitor.write("Items processed and balance updated.")
         sleep(2)
     end
     drawMainMenu()
@@ -159,7 +171,7 @@ function main()
         elseif action == "enter_card" then
             enterCardNumber()
         elseif action == "deposit_items" then
-            depositItemsAndActivateTurtle()
+            startDepositProcess()
         end
     end
 end
