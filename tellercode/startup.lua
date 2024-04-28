@@ -3,79 +3,82 @@ os.loadAPI("json")
 
 local monitor = peripheral.wrap("top")  -- Monitor is above the computer
 local databaseID = 5  -- The ID of the central database computer
-local turtleID =  -- Define your turtle ID
 
--- Setup monitor display
-function setupGUI()
+-- General display setup
+function setupMonitor()
     monitor.setTextScale(0.5)
+    monitor.setBackgroundColor(colors.black)
     monitor.clear()
-    monitor.setCursorPos(1, 1)
-    monitor.write("1. New Card")
-    monitor.setCursorPos(1, 3)
-    monitor.write("2. Enter Card Number")
 end
 
--- Function to display a numeric pad for entering a 4-digit number
-function numericInput(prompt)
-    monitor.clear()
-    monitor.setCursorPos(1, 1)
-    monitor.write(prompt)
-    monitor.setCursorPos(1, 2)
-    local input = ""
-    while true do
-        local event, side, x, y = os.pullEvent("monitor_touch")
-        -- Define touch areas for numeric input
-        -- This is a placeholder: you should define actual areas based on your monitor setup
-        if y == 4 then input = input .. "1" end  -- Example for '1'
-        -- Add conditions for other numbers and a delete function
-        if #input == 4 then break end  -- Exit after 4 digits
-        monitor.setCursorPos(1, 2)
-        monitor.write(input .. "_")
+-- Function to draw a button
+function drawButton(x, y, width, height, text, bgColor)
+    monitor.setBackgroundColor(bgColor)
+    for i = 0, height - 1 do
+        monitor.setCursorPos(x, y + i)
+        monitor.write(string.rep(" ", width))  -- Draw the button background
     end
-    return tonumber(input)
+    local textX = x + (width // 2) - (#text // 2)
+    local textY = y + (height // 2)
+    monitor.setCursorPos(textX, textY)
+    monitor.write(text)
 end
 
--- Function to handle user selection from the main menu
-function handleMenuSelection()
+-- Main menu screen
+function drawMainMenu()
+    setupMonitor()
+    drawButton(2, 2, 28, 3, "New Card", colors.red)
+    drawButton(2, 6, 28, 3, "Enter Card Number", colors.red)
+end
+
+-- Screen to input card number
+function drawCardInputScreen()
+    setupMonitor()
+    monitor.setCursorPos(2, 2)
+    monitor.write("Enter Card Number:")
+    monitor.setCursorPos(2, 4)
+    monitor.setBackgroundColor(colors.white)
+    monitor.write(string.rep(" ", 26))
+    monitor.setCursorPos(2, 8)
+    drawButton(2, 8, 28, 3, "Submit", colors.red)
+end
+
+-- Handle touch events
+function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if y == 1 then  -- New card option
-            return true, 0  -- True indicates new card, 0 is a dummy player ID
-        elseif y == 3 then  -- Enter card number option
-            local playerID = numericInput("Enter Your 4-Digit ID:")
-            if playerID then
-                return false, playerID
+        if y >= 2 and y <= 4 then
+            if x >= 2 and x <= 29 then
+                return "new_card"
+            end
+        elseif y >= 6 and y <= 8 then
+            if x >= 2 and x <= 29 then
+                return "enter_card"
+            end
+        elseif y >= 8 and y <= 10 then
+            if x >= 2 and x <= 29 then
+                return "submit"
             end
         end
     end
 end
 
--- Function to activate the turtle
-function activateTurtle()
-    rednet.open("back")
-    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
-    rednet.close()
-end
-
 -- Main server loop
 function main()
     rednet.open("back")
-    setupGUI()
-    while true do
-        local newCard, playerID = handleMenuSelection()
-        if newCard then
-            rednet.send(databaseID, {type = "createNewCard"}, "databaseQuery")
-            local senderId, response = rednet.receive("databaseResponse")
-            monitor.clear()
-            monitor.write(response.message)
-        else
-            monitor.clear()
-            monitor.write("Insert items and press 'Done'")
-            os.pullEvent("monitor_touch")  -- Wait for the 'Done' touch
-            activateTurtle()  -- Trigger the turtle to start its job
-        end
-        sleep(5)  -- Give some delay before restarting the loop
-        setupGUI()  -- Redisplay the main menu
+    drawMainMenu()
+    local action = handleTouchEvents()
+
+    if action == "new_card" then
+        -- Handle new card creation
+        rednet.send(databaseID, {type = "createNewCard"}, "databaseQuery")
+        local senderId, response = rednet.receive("databaseResponse")
+        displayMessage(response.message)
+    elseif action == "enter_card" then
+        -- Handle card number input
+        drawCardInputScreen()
+        local cardNumber = read()
+        -- Process card number...
     end
 end
 
