@@ -62,18 +62,28 @@ function sendItemData()
     rednet.close()
 end
 
--- Main routine
+-- Main routine modification to wait for activation command
 function main()
-    -- Navigate to deposit chest
-    if goTo(223, 57, -406) then
-        collectItems()
-        goTo(223, 64, -406)
-        goTo(223, 64, -397)
-        goTo(223, 67, -397)
-        goTo(223, 67, -395)
-        sendItemData()
+    rednet.open("right")  -- Ensure the modem is open
+    while true do
+        local senderId, message, protocol = rednet.receive("turtleCommand")
+        if protocol == "turtleCommand" and message.command == "activate" then
+            -- Navigate to deposit chest
+            if goTo(223, 57, -406) then
+                collectItems()
+                goTo(223, 64, -406)
+                goTo(223, 64, -397)
+                goTo(223, 67, -397)
+                goTo(223, 67, -395)
+                sendItemData()
+            end
+        end
     end
 end
+
+-- Run the main function
+main()
+
 
 -- Run the main function
 main()
