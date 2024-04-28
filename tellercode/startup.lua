@@ -32,7 +32,11 @@ function drawPinPad()
     for i, key in ipairs(keys) do
         local xPos = 2 + ((i-1) % 3) * 10
         if i > 9 then xPos = 12 end -- Adjust for bottom row
-        drawButton(xPos, yPos, 8, 3, key, colors.gray)
+        if key == "Enter" then
+            drawButton(xPos, yPos, 8, 3, key, colors.lime)  -- Make Enter key lime green for visibility
+        else
+            drawButton(xPos, yPos, 8, 3, key, colors.green)  -- Other keys are regular green
+        end
         if i % 3 == 0 then yPos = yPos + 4 end
     end
 end
@@ -41,25 +45,21 @@ function handlePinPadInput()
     local pin = ""
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        print("Touched at x:", x, "y:", y)  -- Debug output
+        local row = math.floor((y - 3) / 4)
+        local col = math.floor((x - 1) / 10)
+        local index = row * 3 + col + 1
+        if index > 9 then index = index + 3 end -- Adjust for bottom row buttons
+        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "", "Clear", "Enter"}[index]
 
-        -- Calculate row and column based on your layout specifics
-        local row = math.ceil((y - 3) / 4)
-        local col = math.ceil((x - 1) / 10)
-        local index = (row - 1) * 3 + col
-        if index > 9 then index = index + 2 end -- Adjust for Clear and Enter buttons in your specific layout
-
-        local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}
-        local key = keys[index]
-
-        print("Index:", index, "Key:", key)  -- Debug output
-
+        -- Check if the key press was on a button
         if key == "Clear" then
             pin = "" -- Reset pin
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
         elseif key == "Enter" then
-            return pin -- Return pin if Enter is pressed
+            if #pin == 4 then  -- Ensure pin is exactly 4 digits before accepting
+                return pin -- Return pin if Enter is pressed
+            end
         elseif key ~= "" and key ~= nil then
             pin = pin .. key
             monitor.setCursorPos(5, 19)
