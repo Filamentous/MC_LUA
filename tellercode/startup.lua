@@ -12,7 +12,7 @@ end
 
 function drawButton(x, y, width, height, text, bgColor)
     paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, bgColor)
-    monitor.setCursorPos(x + 2, y + (height // 2))
+    monitor.setCursorPos(x + 2, y + (height / 2))
     monitor.setTextColor(colors.white)
     monitor.write(text)
 end
