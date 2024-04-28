@@ -1,83 +1,122 @@
 local monitor = peripheral.wrap("top")
-local databaseID = 5 -- The ID of your database computer
-local turtleID = 8 -- The ID of your turtle
+local redstone = peripheral.wrap("bottom")
+local databaseID = 5  -- ID of your database computer
+local turtleID = 8    -- ID of your turtle
 
--- Basic utilities for drawing and interaction
-function drawButton(x, y, width, height, text, color)
-    paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, color)
-    monitor.setCursorPos(x + (width - #text) / 2, y + height / 2)
+-- Utility functions for GUI
+function setupMonitor()
+    monitor.clear()
+    monitor.setTextScale(0.5)
+    monitor.setBackgroundColor(colors.black)
+end
+
+function drawButton(x, y, width, height, text, bgColor)
+    paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, bgColor)
+    monitor.setCursorPos(x + 2, y + (height // 2))
     monitor.setTextColor(colors.white)
     monitor.write(text)
 end
 
-function clearScreen()
-    monitor.setBackgroundColor(colors.black)
-    monitor.clear()
-    monitor.setCursorPos(1, 1)
-end
-
--- Main menu GUI
+-- GUI screens
 function drawMainMenu()
-    clearScreen()
-    drawButton(2, 2, 38, 5, "New Card", colors.green)
-    drawButton(2, 7, 38, 5, "Enter Card Number", colors.green)
-    drawButton(2, 12, 38, 5, "Deposit Items", colors.blue)
+    setupMonitor()
+    drawButton(2, 4, 30, 3, "New Card", colors.green)
+    drawButton(2, 9, 30, 3, "Enter Card Number", colors.green)
+    drawButton(2, 14, 30, 3, "Deposit Items", colors.blue)
 end
 
--- Function to handle touch interactions
+-- Touch event handling
 function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if y >= 2 and y <= 5 then
+        if y >= 4 and y <= 6 then
             return "new_card"
-        elseif y >= 7 and y <= 10 then
+        elseif y >= 9 and y <= 11 then
             return "enter_card"
-        elseif y >= 12 and y <= 15 then
+        elseif y >= 14 and y <= 16 then
             return "deposit_items"
         end
     end
 end
 
--- Activate turtle to collect and send item data
-function activateTurtle()
+-- Actions for each menu item
+function createNewCard()
+    local cardNumber = math.random(1000, 9999)  -- Simulated card number generation
     rednet.open("back")
-    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
+    rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
+    local senderId, response = rednet.receive("databaseResponse")
+    monitor.clear()
+    if response.success then
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card " .. cardNumber .. " created successfully!")
+        redstone.setOutput("bottom", true)
+        sleep(1)
+        redstone.setOutput("bottom", false)
+    else
+        monitor.setCursorPos(1, 1)
+        monitor.write("Failed to create card: " .. response.message)
+    end
+    sleep(2)
+    drawMainMenu()
     rednet.close()
 end
 
--- Function to receive item data from turtle and update database
-function receiveItemsData()
-    local senderId, message, protocol = rednet.receive("itemData")
-    if protocol == "itemData" and senderId == turtleID then
-        -- Process received item data and update database
-        local totalValue = 0
-        for _, item in ipairs(message) do
-            if itemValues[item.name] then
-                totalValue = totalValue + (itemValues[item.name] * item.count)
-            end
-        end
-
-        rednet.open("back")
-        rednet.send(databaseID, {type = "updateBalance", amount = totalValue}, "databaseQuery")
-        rednet.close()
+function enterCardNumber()
+    monitor.clear()
+    monitor.setCursorPos(1, 1)
+    monitor.write("Enter your card number:")
+    local cardNumber = tonumber(read())
+    rednet.open("back")
+    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
+    local senderId, response = rednet.receive("databaseResponse")
+    monitor.clear()
+    if response.exists then
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card number exists. You may deposit items.")
+    else
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card number does not exist. Try again.")
+        sleep(2)
+        drawMainMenu()
+        return
     end
+    sleep(2)
+    drawMainMenu()
+    rednet.close()
 end
 
--- Main function to run the teller machine
+function depositItemsAndActivateTurtle()
+    monitor.clear()
+    monitor.setCursorPos(1, 1)
+    monitor.write("Please deposit your items and press any key when done.")
+    os.pullEvent("key")  -- Wait for user to press a key after depositing items
+    rednet.open("back")
+    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
+    monitor.write("Processing items...")
+    local senderId, message, protocol = rednet.receive("itemData")
+    if protocol == "itemData" and senderId == turtleID then
+        -- Assume code to process and update items here
+        monitor.setCursorPos(1, 2)
+        monitor.write("Items processed successfully.")
+        sleep(2)
+    end
+    drawMainMenu()
+    rednet.close()
+end
+
+-- Main function
 function main()
     drawMainMenu()
     while true do
         local action = handleTouchEvents()
         if action == "new_card" then
-            -- Implement new card creation logic
+            createNewCard()
         elseif action == "enter_card" then
-            -- Implement card number entry logic
+            enterCardNumber()
         elseif action == "deposit_items" then
-            -- Wait for user to deposit items and press the button
-            activateTurtle()
-            receiveItemsData()
+            depositItemsAndActivateTurtle()
         end
     end
 end
 
-main()  -- Start the program
+main()
