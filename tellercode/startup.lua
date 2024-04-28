@@ -1,7 +1,7 @@
 local monitor = peripheral.wrap("top")
-local databaseID = 5  -- Assuming the database has an ID of 5
-local turtleID = 8    -- Assuming the turtle has an ID of 8
-local tellerMachineID = peripheral.getName(os.getComputer())  -- Self-identification for rednet communications
+local databaseID = 5
+local turtleID = 8
+local tellerMachineID = 6
 
 -- Basic utilities for drawing and interaction
 function drawButton(x, y, text, color)
