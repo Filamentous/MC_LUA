@@ -43,11 +43,14 @@ function handlePinPadInput()
         local event, side, x, y = os.pullEvent("monitor_touch")
         print("Touched at x:", x, "y:", y)  -- Debug output
 
+        -- Calculate row and column based on your layout specifics
         local row = math.ceil((y - 3) / 4)
         local col = math.ceil((x - 1) / 10)
         local index = (row - 1) * 3 + col
-        if index > 9 then index = index + 2 end -- Adjust for Clear and Enter buttons
-        local key = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}[index]
+        if index > 9 then index = index + 2 end -- Adjust for Clear and Enter buttons in your specific layout
+
+        local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}
+        local key = keys[index]
 
         print("Index:", index, "Key:", key)  -- Debug output
 
@@ -57,7 +60,7 @@ function handlePinPadInput()
             monitor.clearLine()
         elseif key == "Enter" then
             return pin -- Return pin if Enter is pressed
-        elseif key ~= "" then
+        elseif key ~= "" and key ~= nil then
             pin = pin .. key
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
