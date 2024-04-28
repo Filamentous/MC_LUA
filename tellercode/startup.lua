@@ -1,101 +1,103 @@
--- Load necessary APIs
-os.loadAPI("json")
-local monitor = peripheral.wrap("top")  -- Monitor is above the computer
-local databaseID = 5  -- The ID of the central database computer
+local monitor = peripheral.wrap("top")
+local databaseID = 5  -- Assuming the database has an ID of 5
+local turtleID = 8    -- Assuming the turtle has an ID of 8
+local tellerMachineID = peripheral.getName(os.getComputer())  -- Self-identification for rednet communications
 
--- General display setup
-function setupMonitor()
-    monitor.setTextScale(0.5)
-    monitor.setBackgroundColor(colors.black)
-    monitor.clear()
-end
-
--- Function to draw a button
-function drawButton(x1, y1, x2, y2, text, bgColor, textColor)
-    paintutils.drawFilledBox(x1, y1, x2, y2, bgColor)
-    local width = x2 - x1 + 1
-    local height = y2 - y1 + 1
-    local textX = x1 + (width - #text) // 2
-    local textY = y1 + (height // 2)
-    monitor.setTextColor(textColor)
-    monitor.setCursorPos(textX, textY)
+-- Basic utilities for drawing and interaction
+function drawButton(x, y, text, color)
+    local width = #text + 2
+    paintutils.drawFilledBox(x, y, x + width, y + 1, color)
+    monitor.setCursorPos(x + 1, y)
+    monitor.setTextColor(colors.white)
     monitor.write(text)
 end
 
--- Draws the main menu
-function drawMainMenu()
-    setupMonitor()
-    drawButton(2, 3, 27, 6, "New Card", colors.red, colors.white)
-    drawButton(2, 8, 27, 11, "Enter Card Number", colors.red, colors.white)
+function clearScreen()
+    monitor.setBackgroundColor(colors.black)
+    monitor.clear()
+    monitor.setCursorPos(1, 1)
 end
 
--- Function to handle touch interaction
-function handleTouchEvents()
+-- Draw the numeric keypad for card number input
+function drawKeypad()
+    clearScreen()
+    local buttons = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}
+    local y = 2
+    for i, button in ipairs(buttons) do
+        drawButton(2, y, button, colors.blue)
+        y = y + 2
+        if i % 3 == 0 then y = y + 1 end  -- Add a space every three buttons
+    end
+end
+
+-- Handling touch input for the numeric keypad
+function handleKeypadInput()
+    local input = ""
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        if x >= 2 and x <= 27 then
-            if y >= 3 and y <= 6 then
-                return "new_card"
-            elseif y >= 8 and y <= 11 then
-                return "enter_card"
+        local value = math.floor((y - 2) / 3) * 3 + math.ceil((x - 1) / 8)
+        if value >= 1 and value <= 12 then
+            local label = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "Enter", "Clear"}[value]
+            if label == "Enter" then
+                return input
+            elseif label == "Clear" then
+                input = ""
+                clearScreen()
+                drawKeypad()
+            else
+                input = input .. label
+                if #input == 4 then
+                    return input
+                end
             end
         end
     end
 end
 
--- Function for creating a new card
-function createNewCard()
-    rednet.open("back")
-    local cardNumber = math.random(1000, 9999)  -- Simulate card number generation
-    rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
-    local _, response = rednet.receive("databaseResponse")
-    monitor.clear()
-    if response.success then
-        monitor.setCursorPos(1, 1)
-        monitor.write("Card " .. cardNumber .. " created successfully!")
-    else
-        monitor.setCursorPos(1, 1)
-        monitor.write("Failed to create card. Error: " .. response.message)
-    end
-    sleep(2)
-    drawMainMenu()
-    rednet.close()
+function waitForItemDepositAndSend()
+    drawButton(2, 14, "Deposit Items", colors.green)
+    os.pullEvent("monitor_touch")  -- Wait for touch event to confirm deposit
+    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
 end
 
--- Function for entering card number
-function enterCardNumber()
-    setupMonitor()
-    monitor.setCursorPos(1, 1)
-    monitor.write("Please enter your card number:")
-    local cardNumber = tonumber(read())
-    rednet.open("back")
-    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
-    local _, response = rednet.receive("databaseResponse")
-    rednet.close()
-    monitor.clear()
-    if response.exists then
-        monitor.setCursorPos(1, 1)
-        monitor.write("Card number " .. cardNumber .. " exists.")
-        sleep(2)
-    else
-        monitor.setCursorPos(1, 1)
-        monitor.write("Card number does not exist.")
-        sleep(2)
-    end
-    drawMainMenu()
-end
+local itemValues = {
+    ["minecraft:diamond"] = 1,
+    ["minecraft:netherite_scrap"] = 4,
+    ["minecraft:netherite_ingot"] = 8
+}
 
--- Main function
-function main()
-    drawMainMenu()
-    while true do
-        local action = handleTouchEvents()
-        if action == "new_card" then
-            createNewCard()
-        elseif action == "enter_card" then
-            enterCardNumber()
+-- Function to process received items and update the balance
+function receiveItemsData()
+    local senderId, items, protocol = rednet.receive("itemData")
+    if protocol == "itemData" and senderId == turtleID then  -- Ensure the data is from the turtle
+        local totalValue = 0
+        for _, item in ipairs(items) do
+            if itemValues[item.name] then
+                totalValue = totalValue + (itemValues[item.name] * item.count)
+            end
         end
+
+        -- Send the calculated value as a balance update to the database
+        rednet.open("back")
+        rednet.send(databaseID, {type = "updateBalance", amount = totalValue}, "databaseQuery")
+        rednet.close()
+
+        -- Optionally, display the updated balance
+        monitor.clear()
+        monitor.setCursorPos(1, 1)
+        monitor.write("Balance updated by: " .. totalValue)
+        sleep(2)
+        drawMainMenu()
     end
 end
 
-main()  -- Run the main function
+function main()
+    rednet.open("back")
+    drawKeypad()
+    local cardNumber = handleKeypadInput()
+    -- Here would be the logic to check/create the card number via rednet
+    waitForItemDepositAndSend()
+    receiveItemsData()
+end
+
+main()

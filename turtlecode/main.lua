@@ -1,3 +1,5 @@
+local tellerMachineID = 6
+
 -- GPS navigation function
 function goTo(x, y, z)
     local curX, curY, curZ = gps.locate(5)
@@ -67,7 +69,7 @@ function main()
     rednet.open("right")  -- Ensure the modem is open
     while true do
         local senderId, message, protocol = rednet.receive("turtleCommand")
-        if protocol == "turtleCommand" and message.command == "activate" then
+        if protocol == "turtleCommand" and message.command == "activate" and senderId == tellerMachineID then
             -- Navigate to deposit chest
             if goTo(223, 57, -406) then
                 collectItems()
