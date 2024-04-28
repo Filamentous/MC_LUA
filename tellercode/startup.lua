@@ -5,7 +5,7 @@ local turtleID = 8 -- The ID of your turtle
 -- Basic utilities for drawing and interaction
 function drawButton(x, y, width, height, text, color)
     paintutils.drawFilledBox(x, y, x + width - 1, y + height - 1, color)
-    monitor.setCursorPos(x + (width - #text) // 2, y + height // 2)
+    monitor.setCursorPos(x + (width - #text) / 2, y + height / 2)
     monitor.setTextColor(colors.white)
     monitor.write(text)
 end
