@@ -16,11 +16,11 @@ function updateBalance(playerID, amount)
 end
 
 -- Function to handle new card/account creation
-function createNewCard(playerID)
-    if balances[playerID] then
+function createNewCard(cardNumber)
+    if balances[cardNumber] then
         return false, "Account already exists."
     else
-        balances[playerID] = 0
+        balances[cardNumber] = 0
         writeToFile()
         return true, "New account created."
     end
@@ -33,9 +33,9 @@ function writeToFile()
     file.close()
 end
 
--- Function to check balance, used by slot machines
-function checkBalance(playerID)
-    return balances[playerID] or 0  -- Return 0 if no account exists
+-- Function to check if a card number exists
+function checkCardExists(cardNumber)
+    return balances[cardNumber] ~= nil  -- Return true if the card exists, false otherwise
 end
 
 -- Server loop to handle requests
@@ -46,12 +46,12 @@ function main()
         if table.contains(authorizedIDs, senderId) then  -- Check if the sender is authorized
             if message.type == "updateBalance" and message.playerID and message.amount then
                 updateBalance(message.playerID, message.amount)
-            elseif message.type == "createNewCard" and message.playerID then
-                local success, response = createNewCard(message.playerID)
+            elseif message.type == "createNewCard" and message.cardNumber then
+                local success, response = createNewCard(message.cardNumber)
                 rednet.send(senderId, {success = success, response = response}, "databaseResponse")
-            elseif message.type == "checkBalance" and message.playerID then
-                local balance = checkBalance(message.playerID)
-                rednet.send(senderId, {balance = balance}, "databaseResponse")
+            elseif message.type == "checkCard" and message.cardNumber then
+                local exists = checkCardExists(message.cardNumber)
+                rednet.send(senderId, {exists = exists}, "databaseResponse")
             end
         else
             print("Unauthorized access attempt from ID " .. senderId)

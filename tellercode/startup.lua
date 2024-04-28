@@ -1,6 +1,5 @@
 -- Load necessary APIs
 os.loadAPI("json")
-
 local monitor = peripheral.wrap("top")  -- Monitor is above the computer
 local databaseID = 5  -- The ID of the central database computer
 
@@ -12,72 +11,90 @@ function setupMonitor()
 end
 
 -- Function to draw a button
-function drawButton(x, y, width, height, text, bgColor)
-    monitor.setBackgroundColor(bgColor)
-    for i = 0, height - 1 do
-        monitor.setCursorPos(x, y + i)
-        monitor.write(string.rep(" ", width))  -- Draw the button background
-    end
-    local textX = x + (width / 2) - (#text / 2)
-    local textY = y + (height / 2)
+function drawButton(x1, y1, x2, y2, text, bgColor, textColor)
+    paintutils.drawFilledBox(x1, y1, x2, y2, bgColor)
+    local width = x2 - x1 + 1
+    local height = y2 - y1 + 1
+    local textX = x1 + (width - #text) // 2
+    local textY = y1 + (height // 2)
+    monitor.setTextColor(textColor)
     monitor.setCursorPos(textX, textY)
     monitor.write(text)
 end
 
--- Main menu screen
+-- Draws the main menu
 function drawMainMenu()
     setupMonitor()
-    drawButton(2, 2, 28, 3, "New Card", colors.red)
-    drawButton(2, 6, 28, 3, "Enter Card Number", colors.red)
+    drawButton(2, 3, 27, 6, "New Card", colors.red, colors.white)
+    drawButton(2, 8, 27, 11, "Enter Card Number", colors.red, colors.white)
 end
 
--- Screen to input card number
-function drawCardInputScreen()
-    setupMonitor()
-    monitor.setCursorPos(2, 2)
-    monitor.write("Enter Card Number:")
-    monitor.setCursorPos(2, 4)
-    monitor.setBackgroundColor(colors.white)
-    monitor.write(string.rep(" ", 26))
-    monitor.setCursorPos(2, 8)
-    drawButton(2, 8, 28, 3, "Submit", colors.red)
-end
-
+-- Function to handle touch interaction
 function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
-        -- Check coordinates for "New Card" button
-        if x >= 2 and x <= 29 and y >= 2 and y <= 4 then
-            return "new_card"
-        end
-        -- Check coordinates for "Enter Card Number" button
-        if x >= 2 and x <= 29 and y >= 6 and y <= 8 then
-            return "enter_card"
-        end
-        -- Check coordinates for "Submit" button (if applicable to your GUI design)
-        if x >= 2 and x <= 29 and y >= 10 and y <= 12 then
-            return "submit"
+        if x >= 2 and x <= 27 then
+            if y >= 3 and y <= 6 then
+                return "new_card"
+            elseif y >= 8 and y <= 11 then
+                return "enter_card"
+            end
         end
     end
 end
 
-
--- Main server loop
-function main()
+-- Function for creating a new card
+function createNewCard()
     rednet.open("back")
+    local cardNumber = math.random(1000, 9999)  -- Simulate card number generation
+    rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
+    local _, response = rednet.receive("databaseResponse")
+    monitor.clear()
+    if response.success then
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card " .. cardNumber .. " created successfully!")
+    else
+        monitor.setCursorPos(1, 1)
+        monitor.write("Failed to create card. Error: " .. response.message)
+    end
+    sleep(2)
     drawMainMenu()
-    local action = handleTouchEvents()
+    rednet.close()
+end
 
-    if action == "new_card" then
-        -- Handle new card creation
-        rednet.send(databaseID, {type = "createNewCard"}, "databaseQuery")
-        local senderId, response = rednet.receive("databaseResponse")
-        displayMessage(response.message)
-    elseif action == "enter_card" then
-        -- Handle card number input
-        drawCardInputScreen()
-        local cardNumber = read()
-        -- Process card number...
+-- Function for entering card number
+function enterCardNumber()
+    setupMonitor()
+    monitor.setCursorPos(1, 1)
+    monitor.write("Please enter your card number:")
+    local cardNumber = tonumber(read())
+    rednet.open("back")
+    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
+    local _, response = rednet.receive("databaseResponse")
+    rednet.close()
+    monitor.clear()
+    if response.exists then
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card number " .. cardNumber .. " exists.")
+        sleep(2)
+    else
+        monitor.setCursorPos(1, 1)
+        monitor.write("Card number does not exist.")
+        sleep(2)
+    end
+    drawMainMenu()
+end
+
+-- Main function
+function main()
+    drawMainMenu()
+    while true do
+        local action = handleTouchEvents()
+        if action == "new_card" then
+            createNewCard()
+        elseif action == "enter_card" then
+            enterCardNumber()
+        end
     end
 end
 
