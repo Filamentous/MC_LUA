@@ -181,26 +181,30 @@ function startDepositProcess()
     monitor.write("Waiting for items to be deposited...")
 
     -- Receive item data from turtle and calculate total value
+    -- Receive item data from turtle and process it
     local senderId, data, protocol = rednet.receive("itemData")
     if senderId == turtleID then
         local totalValue = 0
         local y_ind = 2
-        for itemName, itemCount in pairs(data.items) do
+
+        local items = textutils.unserialize(data.items)  -- Deserialize the items dictionary
+        for itemName, itemCount in pairs(items) do
             local itemValue = itemValues[itemName]
             if itemValue then
                 y_ind = y_ind + 1
                 monitor.setCursorPos(1, y_ind)
-                monitor.write("item val " .. itemValue)
+                monitor.write("Item val " .. itemValue)
                 local itemTotalValue = itemValue * itemCount
                 y_ind = y_ind + 1
                 monitor.setCursorPos(1, y_ind)
-                monitor.write("item prod " .. itemTotalValue)
+                monitor.write("Item prod " .. itemTotalValue)
                 totalValue = totalValue + itemTotalValue
                 y_ind = y_ind + 1
                 monitor.setCursorPos(1, y_ind)
                 monitor.write("Running total " .. totalValue)
             end
         end
+
 
         
         -- Update balance in the database
