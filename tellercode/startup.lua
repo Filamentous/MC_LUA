@@ -154,6 +154,7 @@ function startDepositProcess()
     rednet.send(databaseID, {type = "checkCard", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     if not response.exists then
+        monitor.setCursorPos(1, 2)
         monitor.write("Card number does not exist. Please try again.")
         sleep(2)
         drawMainMenu()
@@ -184,9 +185,21 @@ function startDepositProcess()
     if senderId == turtleID then
         -- Calculate the total value of items
         local totalValue = 0
+        local y_ind = 2
         for _, item in ipairs(items) do
             if itemValues[item.name] then
-                totalValue = totalValue + (itemValues[item.name] * item.count)
+                local itemVal = itemValues[item.name]
+                y_ind = y_ind + 1
+                monitor.setCursorPos(1, y_ind)
+                monitor.write("item val " .. itemVal)
+                local itemValCount = itemVal * item.count
+                y_ind = y_ind + 1
+                monitor.setCursorPos(1, y_ind)
+                monitor.write("item prod " .. itemValCount)
+                totalValue = totalValue + itemValCount
+                y_ind = y_ind + 1
+                monitor.setCursorPos(1, y_ind)
+                monitor.write("Running total " .. totalValue)
             end
         end
         
