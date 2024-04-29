@@ -5,7 +5,7 @@ function move(steps, action, actionName)
     for i = 1, steps do
         action()
         print("Performed: " .. actionName .. " Step: " .. i)
-        sleep(0.5)  -- Sleep for half a second to allow the action to complete
+        sleep(0.85)  -- Sleep for half a second to allow the action to complete
     end
 end
 
@@ -24,7 +24,7 @@ end
 -- Send item data to the teller machine
 function sendItemData()
     local items = {}
-    for slot = 1, 16 do
+    for slot = 1, 15 do
         local item = turtle.getItemDetail(slot)
         if item then
             table.insert(items, {name = item.name, count = item.count})
@@ -42,7 +42,7 @@ end
 
 -- Deposit all items into a chest below with debugging
 function depositItems()
-    for slot = 1, 16 do
+    for slot = 1, 15 do
         turtle.select(slot)
         turtle.dropDown()
         print("Dropped items from slot: " .. slot)
