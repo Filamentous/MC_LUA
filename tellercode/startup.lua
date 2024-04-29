@@ -111,6 +111,7 @@ function createNewCard()
             monitor.write("Failed to create card: " .. response.message)
         else
             montior.write("Failed to create card")
+        end
     end
     sleep(2)
     drawMainMenu()
