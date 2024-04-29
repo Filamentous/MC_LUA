@@ -23,22 +23,27 @@ end
 
 -- Send item data to the teller machine
 function sendItemData()
-    local items = {}
-    for slot = 1, 15 do
+    local itemsDict = {}
+    for slot = 1, 15 do  -- Only iterate over 15 slots as in your example
         local item = turtle.getItemDetail(slot)
         if item then
-            table.insert(items, {name = item.name, count = item.count})
-            print("Added " .. item.name .. " count: " .. item.count .. " to data packet.")
+            if itemsDict[item.name] then
+                itemsDict[item.name] = itemsDict[item.name] + item.count
+            else
+                itemsDict[item.name] = item.count
+            end
+            print("Updated " .. item.name .. " count: " .. itemsDict[item.name] .. " in data packet.")
         end
-        sleep(0.1)  -- Allow time for the data packet to update
+        sleep(0.1)  -- Allow time for data processing
     end
 
     rednet.open("right")
-    rednet.send(tellerMachineID, {items = items}, "itemData")
-    print("Sent item data to teller machine.")
+    rednet.send(tellerMachineID, {items = itemsDict}, "itemData")
+    print("Sent item data to teller machine as dictionary.")
     sleep(0.5)  -- Ensure message is sent before closing connection
     rednet.close()
 end
+
 
 -- Deposit all items into a chest below with debugging
 function depositItems()
