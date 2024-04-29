@@ -1,67 +1,78 @@
 local tellerMachineID = 6
 
--- Function to move turtle a set number of steps
-function move(steps, action)
+-- Helper function for movement with debugging
+function move(steps, action, actionName)
     for i = 1, steps do
         action()
+        print("Performed: " .. actionName .. " Step: " .. i)
     end
 end
 
--- Function to collect items from a chest
+-- Collect items from a chest with debugging
 function collectItems()
     turtle.select(1)  -- Select the first slot
+    local count = 0
     while turtle.suck() do
-        -- Keep collecting items until the chest is empty
+        count = count + 1
+        print("Collected item batch: " .. count)
     end
+    print("Finished collecting items.")
 end
 
--- Function to send item data to the teller machine
+-- Send item data to the teller machine
 function sendItemData()
     local items = {}
     for slot = 1, 16 do
         local item = turtle.getItemDetail(slot)
         if item then
             table.insert(items, {name = item.name, count = item.count})
+            print("Added " .. item.name .. " count: " .. item.count .. " to data packet.")
         end
     end
 
     rednet.open("right")
     rednet.send(tellerMachineID, {items = items}, "itemData")
+    print("Sent item data to teller machine.")
     rednet.close()
 end
 
--- Function to deposit all items into a chest below
+-- Deposit all items into a chest below with debugging
 function depositItems()
     for slot = 1, 16 do
         turtle.select(slot)
-        turtle.dropDown()  -- Drop all items from the current slot downwards into the chest
+        turtle.dropDown()
+        print("Dropped items from slot: " .. slot)
     end
+    print("All items deposited.")
 end
 
--- Navigation to predefined locations and actions
+-- Execute a sequence of predetermined movements and actions
 function performSequence()
-    -- Starting at initial position, assume it starts at 223, 67, -395 (player input chest location)
-    collectItems()  -- Collect from player input chest
-    move(1, turtle.back)  -- Move back to 223, 67, -397
-    move(3, turtle.up)  -- Move up to 223, 70, -397
-    move(9, turtle.back)  -- Move back to 223, 70, -406 (deposit location)
-    sendItemData()  -- Send collected items data
-    depositItems()  -- Deposit items into the chest below
-    move(9, turtle.forward)  -- Move forward to 223, 70, -397
-    move(3, turtle.down)  -- Move down to 223, 67, -397
-    move(1, turtle.forward)  -- Return to starting position at 223, 67, -395
+    print("Starting sequence.")
+    collectItems()
+    move(1, turtle.back, "back")
+    move(3, turtle.up, "up")
+    move(9, turtle.back, "back")
+    sendItemData()
+    depositItems()
+    move(9, turtle.forward, "forward")
+    move(3, turtle.down, "down")
+    move(1, turtle.forward, "forward")
+    print("Sequence completed.")
 end
 
 -- Main routine waiting for activation command
 function main()
-    rednet.open("right")  -- Ensure the modem is open
+    rednet.open("right")
+    print("Rednet opened, waiting for activation command...")
     while true do
         local senderId, message, protocol = rednet.receive("turtleCommand")
+        print("Received message with protocol: " .. tostring(protocol))
         if protocol == "turtleCommand" and message.command == "activate" and senderId == tellerMachineID then
+            print("Activation command received.")
             performSequence()
         end
     end
 end
 
--- Run the main function
-main()
+main()  -- Run the main function
