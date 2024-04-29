@@ -12,7 +12,7 @@ local itemValues = {
 function setupMonitor()
     monitor.clear()
     monitor.setTextScale(0.5)
-    monitor.setBackgroundColor(colors.white)
+    monitor.setBackgroundColor(colors.black)
 end
 
 function drawButton(x, y, width, height, text, bgColor)
