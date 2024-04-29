@@ -27,7 +27,7 @@ function drawMainMenu()
     setupMonitor()
     drawButton(2, 4, 30, 3, "New Card", colors.green)
     drawButton(2, 9, 30, 3, "Enter Card Number", colors.green)
-    drawButton(2, 14, 30, 3, "Deposit Items", colors.blue)
+    drawButton(2, 14, 30, 3, "Deposit Items", colors.green)
 end
 
 function drawPinPad()
