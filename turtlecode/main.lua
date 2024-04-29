@@ -51,7 +51,6 @@ function checkAndRefuel()
         turtle.select(16)
         if turtle.refuel(1) then  -- Refuel with one item from the slot
             print("Refueled using item in slot: " .. slot)
-            break
         end
         if turtle.getFuelLevel() < 50 then
             print("Not enough fuel to continue.")
