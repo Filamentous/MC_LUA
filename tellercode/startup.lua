@@ -143,6 +143,7 @@ function startDepositProcess()
     monitor.write("Enter your card number:")
     drawPinPad()
     local cardNumber = handlePinPadInput()
+    monitor.write("Entered pin:", cardNumber)
 
     -- Check if the card exists in the database
     rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
