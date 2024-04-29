@@ -107,7 +107,10 @@ function createNewCard()
         redstone.setOutput("bottom", false)
     else
         monitor.setCursorPos(1, 1)
-        monitor.write("Failed to create card: " .. response.message)
+        if response.message then
+            monitor.write("Failed to create card: " .. response.message)
+        else
+            montior.write("Failed to create card")
     end
     sleep(2)
     drawMainMenu()
