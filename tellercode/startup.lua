@@ -138,28 +138,62 @@ end
 
 function startDepositProcess()
     rednet.open("back")
-    rednet.send(turtleID, {command = "activate"}, "turtleCommand")  -- Command to collect items
+    monitor.clear()
+    monitor.setCursorPos(1, 1)
+    monitor.write("Enter your card number:")
+    drawPinPad()
+    local cardNumber = handlePinPadInput()
+
+    -- Check if the card exists in the database
+    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
+    local senderId, response = rednet.receive("databaseResponse")
+    if not response.exists then
+        monitor.write("Card number does not exist. Please try again.")
+        sleep(2)
+        drawMainMenu()
+        return
+    end
+
+    -- Confirm deposit
+    monitor.clear()
+    monitor.setCursorPos(1, 1)
+    monitor.write("Confirm items deposit?")
+    drawButton(2, 4, 30, 3, "Confirm", colors.green)
+    
+    while true do
+        local event, side, x, y = os.pullEvent("monitor_touch")
+        if x >= 2 and x <= 32 and y >= 4 and y <= 7 then
+            break -- Exit loop if confirm button is pressed
+        end
+    end
+
+    -- Send command to turtle to collect items
+    rednet.send(turtleID, {command = "activate"}, "turtleCommand")
     monitor.clear()
     monitor.setCursorPos(1, 1)
     monitor.write("Waiting for items to be deposited...")
 
-    local senderId, items, protocol = rednet.receive("itemData")  -- Waiting for turtle to send item data
+    -- Receive item data from turtle
+    local senderId, items, protocol = rednet.receive("itemData")
     if protocol == "itemData" and senderId == turtleID then
         -- Calculate the total value of items
         local totalValue = 0
         for _, item in ipairs(items) do
             if itemValues[item.name] then
-                totalValue = totalValue +itemValues[item.name] * item.count
+                totalValue += itemValues[item.name] * item.count
             end
         end
+        
         -- Update balance in the database
-        rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = pID}, "databaseQuery")
+        rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNumber}, "databaseQuery")
+        monitor.setCursorPos(1, 2)
         monitor.write("Items processed and balance updated.")
         sleep(2)
     end
     drawMainMenu()
     rednet.close()
 end
+
 
 -- Main function
 function main()
