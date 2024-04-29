@@ -21,8 +21,10 @@ end
 -- Function to get the balance of a card
 function getBalance(cardNumber)
     if balances[cardNumber] then
+        print("Found: " .. cardNumber)
         return true, balances[cardNumber]
     else
+        print("Did not find: " .. cardNumber)
         return false, "Card number does not exist."
     end
 end

@@ -128,7 +128,7 @@ function enterCardNumber()
     monitor.clear()
     if response.exists then
         monitor.setCursorPos(1, 1)
-        monitor.write("Your balance is: ", response.balance)
+        monitor.write("Your balance is: " .. response.balance)
     else
         monitor.setCursorPos(1, 1)
         monitor.write("Card number does not exist. Try again.")
