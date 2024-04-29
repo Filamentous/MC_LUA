@@ -42,6 +42,7 @@ function sendItemData()
     rednet.send(tellerMachineID, {items = serializedData}, "itemData")
     print("Sent item data to teller machine as serialized string.")
     rednet.close()
+end
 
 
 
