@@ -181,7 +181,7 @@ function startDepositProcess()
 
     -- Receive item data from turtle
     local senderId, items, protocol = rednet.receive("itemData")
-    if protocol == "itemData" and senderId == turtleID then
+    if senderId == turtleID then
         -- Calculate the total value of items
         local totalValue = 0
         for _, item in ipairs(items) do
@@ -194,6 +194,8 @@ function startDepositProcess()
         monitor.write("Got balance" .. totalValue)
         rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNum}, "databaseQuery")
         monitor.setCursorPos(1, 2)
+        monitor.write("Got balance" .. totalValue)
+        monitor.setCursorPos(1, 3)
         monitor.write("Items processed and balance updated.")
         sleep(2)
     end
