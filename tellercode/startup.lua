@@ -191,6 +191,7 @@ function startDepositProcess()
         end
         
         -- Update balance in the database
+        monitor.write("Got balance" .. totalValue)
         rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNum}, "databaseQuery")
         monitor.setCursorPos(1, 2)
         monitor.write("Items processed and balance updated.")

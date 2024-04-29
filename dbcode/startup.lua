@@ -72,15 +72,15 @@ function main()
         local senderId, message, protocol = rednet.receive("databaseQuery")
         print("Received request from ID " .. senderId)
         if table.contains(authorizedIDs, senderId) then  -- Check if the sender is authorized
-            if message.type == "updateBalance" and message.playerID and message.amount then
+            if message.type == "updateBalance" then
                 updateBalance(message.playerID, message.amount)
-            elseif message.type == "createNewCard" and message.cardNumber then
+            elseif message.type == "createNewCard" then
                 local success, response = createNewCard(message.cardNumber)
                 rednet.send(senderId, {success = success, response = response}, "databaseResponse")
-            elseif message.type == "checkCard" and message.cardNumber then
+            elseif message.type == "checkCard" then
                 local exists = checkCardExists(message.cardNumber)
                 rednet.send(senderId, {exists = exists}, "databaseResponse")
-            elseif message.type == "getBalance" and message.cardNumber then
+            elseif message.type == "getBalance" then
                 local success, balance = getBalance(message.cardNumber)
                 rednet.send(senderId, {success = success, balance = balance}, "databaseResponse")
             end
