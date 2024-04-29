@@ -1,5 +1,4 @@
--- Peripheral setup
-local monitor = peripheral.wrap("top")  -- Monitor is above the computer
+local monitor = peripheral.wrap("top")
 local speaker = peripheral.find("speaker")
 local modem = peripheral.wrap("back")
 
@@ -79,7 +78,7 @@ function playSlotMachine(playerID)
 end
 
 function main()
-    monitor.setTextScale(0.5)  -- Adjust text scale for better visibility on a 2x2 monitor
+    monitor.setTextScale(0.5)
     monitor.clear()
     local playerID = getPlayerIDFromScreen()
     if playerID then
@@ -89,4 +88,4 @@ function main()
     end
 end
 
-main()  -- Start the slot machine
+main()

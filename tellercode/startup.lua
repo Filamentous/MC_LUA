@@ -1,13 +1,12 @@
 local monitor = peripheral.wrap("top")
-local databaseID = 5  -- ID of your database computer
-local turtleID = 8    -- ID of your turtle
+local databaseID = 5
+local turtleID = 8
 local itemValues = {
     ["minecraft:diamond"] = 1,
     ["minecraft:netherite_scrap"] = 4,
     ["minecraft:netherite_ingot"] = 8
 }
 
--- Utility functions for GUI
 function setupMonitor()
     monitor.clear()
     monitor.setTextScale(0.5)
@@ -21,7 +20,6 @@ function drawButton(x, y, width, height, text, bgColor)
     monitor.write(text)
 end
 
--- GUI screens
 function drawMainMenu()
     setupMonitor()
     drawButton(2, 4, 30, 3, "New Card", colors.green)
@@ -36,9 +34,9 @@ function drawPinPad()
     for i, key in ipairs(keys) do
         local xPos = 2 + ((i-1) % 3) * 10
         if key == "Enter" then
-            drawButton(xPos, yPos, 8, 3, key, colors.lime)  -- Make Enter key lime green for visibility
+            drawButton(xPos, yPos, 8, 3, key, colors.lime)
         else
-            drawButton(xPos, yPos, 8, 3, key, colors.green)  -- Other keys are regular green
+            drawButton(xPos, yPos, 8, 3, key, colors.green)
         end
         if i % 3 == 0 then yPos = yPos + 4 end
     end
@@ -51,17 +49,16 @@ function handlePinPadInput()
         local row = math.floor((y - 3) / 4)
         local col = math.floor((x - 1) / 10)
         local index = row * 3 + col + 1
-        if index > 9 then index = index + 3 end -- Adjust for bottom row buttons
+        if index > 9 then index = index + 3 end
         local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}
         local key = keys[index]
-        -- Check if the key press was on a button
         if key == "Clear" then
-            pin = "" -- Reset pin
+            pin = ""
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
         elseif key == "Enter" then
-            if #pin == 4 then  -- Ensure pin is exactly 4 digits before accepting
-                return pin -- Return pin if Enter is pressed
+            if #pin == 4 then  
+                return pin 
             end
         elseif key ~= "" and key ~= nil then
             pin = pin .. key
@@ -75,8 +72,6 @@ function handlePinPadInput()
     end
 end
 
-
--- Touch event handling
 function handleTouchEvents()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
@@ -90,7 +85,6 @@ function handleTouchEvents()
     end
 end
 
--- Actions for each menu item
 function createNewCard()
     drawPinPad()
     local cardNum = handlePinPadInput()
@@ -150,7 +144,6 @@ function startDepositProcess()
     local cardNum = handlePinPadInput()
     monitor.write("Entered pin:", cardNum)
 
-    -- Check if the card exists in the database
     rednet.send(databaseID, {type = "checkCard", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     if not response.exists then
@@ -161,7 +154,6 @@ function startDepositProcess()
         return
     end
 
-    -- Confirm deposit
     monitor.clear()
     monitor.setCursorPos(1, 1)
     monitor.write("Confirm items deposit?")
@@ -170,24 +162,21 @@ function startDepositProcess()
     while true do
         local event, side, x, y = os.pullEvent("monitor_touch")
         if x >= 2 and x <= 32 and y >= 4 and y <= 7 then
-            break -- Exit loop if confirm button is pressed
+            break
         end
     end
 
-    -- Send command to turtle to collect items
     rednet.send(turtleID, {command = "activate"}, "turtleCommand")
     monitor.clear()
     monitor.setCursorPos(1, 1)
     monitor.write("Waiting for items to be deposited...")
 
-    -- Receive item data from turtle and calculate total value
-    -- Receive item data from turtle and process it
     local senderId, data, protocol = rednet.receive("itemData")
     if senderId == turtleID then
         local totalValue = 0
         local y_ind = 2
 
-        local items = textutils.unserialize(data.items)  -- Deserialize the items dictionary
+        local items = textutils.unserialize(data.items) 
         for itemName, itemCount in pairs(items) do
             local itemValue = itemValues[itemName]
             if itemValue then
@@ -205,9 +194,6 @@ function startDepositProcess()
             end
         end
 
-
-        
-        -- Update balance in the database
         monitor.write("Got balance" .. totalValue)
         rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNum}, "databaseQuery")
         monitor.setCursorPos(1, 2)
@@ -220,8 +206,6 @@ function startDepositProcess()
     rednet.close()
 end
 
-
--- Main function
 function main()
     drawMainMenu()
     while true do

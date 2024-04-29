@@ -1,6 +1,5 @@
 local tellerMachineID = 6
 
--- Helper function for movement with debugging and delays
 function move(steps, action, actionName)
     for i = 1, steps do
         action()
@@ -9,22 +8,20 @@ function move(steps, action, actionName)
     end
 end
 
--- Collect items from a chest with debugging
 function collectItems()
-    turtle.select(1)  -- Select the first slot
+    turtle.select(1)
     local count = 0
     while turtle.suck() do
         count = count + 1
         print("Collected item batch: " .. count)
-        sleep(0.1)  -- Short delay to stabilize item collection
+        sleep(0.1)
     end
     print("Finished collecting items.")
 end
 
--- Send item data to the teller machine
 function sendItemData()
-    local items = {}  -- Dictionary to store item counts
-    for slot = 1, 15 do  -- Iterate over 15 slots
+    local items = {}
+    for slot = 1, 15 do
         local item = turtle.getItemDetail(slot)
         if item then
             if items[item.name] then
@@ -34,7 +31,7 @@ function sendItemData()
             end
             print("Updated " .. item.name .. " count: " .. items[item.name])
         end
-        sleep(0.1)  -- Allow time for item processing
+        sleep(0.1)
     end
 
     local serializedData = textutils.serialize(items)
@@ -44,23 +41,20 @@ function sendItemData()
     rednet.close()
 end
 
-
-
--- Deposit all items into a chest below with debugging
 function depositItems()
     for slot = 1, 15 do
         turtle.select(slot)
         turtle.dropDown()
         print("Dropped items from slot: " .. slot)
-        sleep(0.1)  -- Allows time for items to drop
+        sleep(0.1)
     end
     print("All items deposited.")
 end
 
 function checkAndRefuel()
-    if turtle.getFuelLevel() < 50 then  -- Assume we need at least 50 fuel units to complete the sequence
+    if turtle.getFuelLevel() < 50 then
         turtle.select(16)
-        if turtle.refuel(1) then  -- Refuel with one item from the slot
+        if turtle.refuel(1) then
             print("Refueled using item in slot coal in slot 16")
         end
         if turtle.getFuelLevel() < 50 then
@@ -71,10 +65,9 @@ function checkAndRefuel()
     return true
 end
 
--- Execute a sequence of predetermined movements and actions
 function performSequence()
     if not checkAndRefuel() then
-        return  -- Stop the sequence if not enough fuel
+        return
     end
     print("Starting sequence.")
     collectItems()
@@ -91,7 +84,6 @@ function performSequence()
     print("Sequence completed.")
 end
 
--- Main routine waiting for activation command
 function main()
     rednet.open("right")
     print("Rednet opened, waiting for activation command...")
@@ -105,4 +97,4 @@ function main()
     end
 end
 
-main()  -- Run the main function
+main()

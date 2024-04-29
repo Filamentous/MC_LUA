@@ -1,8 +1,6 @@
--- Database storage setup
 local balances = {}
-local authorizedIDs = {6, 7}  -- IDs of authorized machines, including slot machine
+local authorizedIDs = {6, 7} 
 
--- Load existing data
 if fs.exists("balances.txt") then
     local file = fs.open("balances.txt", "r")
     balances = textutils.unserialize(file.readAll())
@@ -18,7 +16,6 @@ function table.contains(table, element)
     return false
 end
 
--- Function to get the balance of a card
 function getBalance(cardNumber)
     if balances[cardNumber] then
         print("Found: " .. cardNumber)
@@ -29,14 +26,12 @@ function getBalance(cardNumber)
     end
 end
 
--- Function to update balance and write to file
 function updateBalance(playerID, amount)
     balances[playerID] = (balances[playerID] or 0) + amount
     print("Updated balance for player ID " .. playerID .. ": +" .. amount)
     writeToFile()
 end
 
--- Function to handle new card/account creation
 function createNewCard(cardNumber)
     if balances[cardNumber] then
         print("Attempt to create a new card failed; card number already exists: " .. cardNumber)
@@ -49,7 +44,6 @@ function createNewCard(cardNumber)
     end
 end
 
--- General function to write changes to file
 function writeToFile()
     local file = fs.open("balances.txt", "w")
     file.write(textutils.serialize(balances))
@@ -57,21 +51,19 @@ function writeToFile()
     print("Balance data written to file.")
 end
 
--- Function to check if a card number exists
 function checkCardExists(cardNumber)
     local exists = balances[cardNumber] ~= nil
     print("Check if card exists (" .. cardNumber .. "): " .. tostring(exists))
     return exists
 end
 
--- Server loop to handle requests
 function main()
     rednet.open("back")
     print("Database server started, waiting for requests...")
     while true do
         local senderId, message, protocol = rednet.receive("databaseQuery")
         print("Received request from ID " .. senderId)
-        if table.contains(authorizedIDs, senderId) then  -- Check if the sender is authorized
+        if table.contains(authorizedIDs, senderId) then
             if message.type == "updateBalance" then
                 updateBalance(message.playerID, message.amount)
             elseif message.type == "createNewCard" then
@@ -89,6 +81,4 @@ function main()
         end
     end
 end
-
--- Run the main function
 main()
