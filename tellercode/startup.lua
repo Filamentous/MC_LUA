@@ -126,7 +126,7 @@ function enterCardNumber()
     rednet.send(databaseID, {type = "getBalance", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     monitor.clear()
-    if response.success then
+    if response.success == true then
         monitor.setCursorPos(1, 1)
         monitor.write("Your balance is: " .. response.balance)
     else
