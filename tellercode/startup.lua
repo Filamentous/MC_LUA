@@ -1,5 +1,4 @@
 local monitor = peripheral.wrap("top")
-local redstone = peripheral.wrap("bottom")
 local databaseID = 5  -- ID of your database computer
 local turtleID = 8    -- ID of your turtle
 local itemValues = {
@@ -120,12 +119,12 @@ function enterCardNumber()
     drawPinPad()
     local cardNum = handlePinPadInput()
     rednet.open("back")
-    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNum}, "databaseQuery")
+    rednet.send(databaseID, {type = "getBalance", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     monitor.clear()
     if response.exists then
         monitor.setCursorPos(1, 1)
-        monitor.write("Card number exists. You may deposit items.")
+        monitor.write("Your balance is: ", response.balance)
     else
         monitor.setCursorPos(1, 1)
         monitor.write("Card number does not exist. Try again.")

@@ -69,6 +69,9 @@ function main()
             elseif message.type == "checkCard" and message.cardNumber then
                 local exists = checkCardExists(message.cardNumber)
                 rednet.send(senderId, {exists = exists}, "databaseResponse")
+            elseif message.type == "getBalance" and message.cardNumber then
+                local success, balance = getBalance(message.cardNumber)
+                rednet.send(senderId, {success = success, balance = balance}, "databaseResponse")
             end
         else
             print("Unauthorized access attempt from ID " .. senderId)
