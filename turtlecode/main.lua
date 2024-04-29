@@ -1,10 +1,11 @@
 local tellerMachineID = 6
 
--- Helper function for movement with debugging
+-- Helper function for movement with debugging and delays
 function move(steps, action, actionName)
     for i = 1, steps do
         action()
         print("Performed: " .. actionName .. " Step: " .. i)
+        sleep(0.5)  -- Sleep for half a second to allow the action to complete
     end
 end
 
@@ -15,6 +16,7 @@ function collectItems()
     while turtle.suck() do
         count = count + 1
         print("Collected item batch: " .. count)
+        sleep(0.1)  -- Short delay to stabilize item collection
     end
     print("Finished collecting items.")
 end
@@ -28,20 +30,23 @@ function sendItemData()
             table.insert(items, {name = item.name, count = item.count})
             print("Added " .. item.name .. " count: " .. item.count .. " to data packet.")
         end
+        sleep(0.1)  -- Allow time for the data packet to update
     end
 
     rednet.open("right")
     rednet.send(tellerMachineID, {items = items}, "itemData")
     print("Sent item data to teller machine.")
+    sleep(0.5)  -- Ensure message is sent before closing connection
     rednet.close()
 end
 
 -- Deposit all items into a chest below with debugging
 function depositItems()
-    for slot = 1, 15 do
+    for slot = 1, 16 do
         turtle.select(slot)
         turtle.dropDown()
         print("Dropped items from slot: " .. slot)
+        sleep(0.1)  -- Allows time for items to drop
     end
     print("All items deposited.")
 end
