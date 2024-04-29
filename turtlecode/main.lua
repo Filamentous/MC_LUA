@@ -38,7 +38,7 @@ end
 
 -- Deposit all items into a chest below with debugging
 function depositItems()
-    for slot = 1, 16 do
+    for slot = 1, 15 do
         turtle.select(slot)
         turtle.dropDown()
         print("Dropped items from slot: " .. slot)
@@ -46,8 +46,26 @@ function depositItems()
     print("All items deposited.")
 end
 
+function checkAndRefuel()
+    if turtle.getFuelLevel() < 50 then  -- Assume we need at least 50 fuel units to complete the sequence
+        turtle.select(16)
+        if turtle.refuel(1) then  -- Refuel with one item from the slot
+            print("Refueled using item in slot: " .. slot)
+            break
+        end
+        if turtle.getFuelLevel() < 50 then
+            print("Not enough fuel to continue.")
+            return false
+        end
+    end
+    return true
+end
+
 -- Execute a sequence of predetermined movements and actions
 function performSequence()
+    if not checkAndRefuel() then
+        return  -- Stop the sequence if not enough fuel
+    end
     print("Starting sequence.")
     collectItems()
     move(1, turtle.back, "back")
@@ -68,7 +86,7 @@ function main()
     while true do
         local senderId, message, protocol = rednet.receive("turtleCommand")
         print("Received message with protocol: " .. tostring(protocol))
-        if protocol == "turtleCommand" and message.command == "activate" and senderId == tellerMachineID then
+        if message.command == "activate" and senderId == tellerMachineID then
             print("Activation command received.")
             performSequence()
         end
