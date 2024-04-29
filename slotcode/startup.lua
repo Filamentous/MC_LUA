@@ -7,6 +7,7 @@ local betAmount = 2
 local jackpot = 64
 local databaseID = 5
 
+
 rednet.open("back")
 
 function getPlayerIDFromScreen()

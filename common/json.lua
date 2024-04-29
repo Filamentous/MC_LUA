@@ -1,5 +1,6 @@
 local json = {}
 
+
 function json.encode(table)
     return textutils.serialize(table)
 end

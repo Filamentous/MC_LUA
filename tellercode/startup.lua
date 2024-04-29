@@ -7,6 +7,7 @@ local itemValues = {
     ["minecraft:netherite_ingot"] = 8
 }
 
+
 function setupMonitor()
     monitor.clear()
     monitor.setTextScale(0.5)

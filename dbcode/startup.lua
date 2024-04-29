@@ -1,6 +1,7 @@
 local balances = {}
 local authorizedIDs = {6, 7} 
 
+
 if fs.exists("balances.txt") then
     local file = fs.open("balances.txt", "r")
     balances = textutils.unserialize(file.readAll())

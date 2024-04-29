@@ -1,5 +1,6 @@
 local tellerMachineID = 6
 
+
 function move(steps, action, actionName)
     for i = 1, steps do
         action()
