@@ -18,6 +18,15 @@ function table.contains(table, element)
     return false
 end
 
+-- Function to get the balance of a card
+function getBalance(cardNumber)
+    if balances[cardNumber] then
+        return true, balances[cardNumber]
+    else
+        return false, "Card number does not exist."
+    end
+end
+
 -- Function to update balance and write to file
 function updateBalance(playerID, amount)
     balances[playerID] = (balances[playerID] or 0) + amount
