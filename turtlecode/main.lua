@@ -48,7 +48,6 @@ function collectItems()
     end
 end
 
--- Function to read items and send data to the teller machine
 function sendItemData()
     local items = {}
     for slot = 1, 16 do
@@ -58,10 +57,17 @@ function sendItemData()
         end
     end
 
-    -- Open rednet and send items to the teller machine
     rednet.open("right")
     rednet.send(tellerMachineID, {items = items}, "itemData")
     rednet.close()
+end
+
+-- Function to deposit all items into a chest below
+function depositItems()
+    for slot = 1, 16 do
+        turtle.select(slot)
+        turtle.dropDown()  -- Drop all items from the current slot downwards into the chest
+    end
 end
 
 -- Main routine modification to wait for activation command
@@ -71,21 +77,20 @@ function main()
         local senderId, message, protocol = rednet.receive("turtleCommand")
         if protocol == "turtleCommand" and message.command == "activate" and senderId == tellerMachineID then
             -- Navigate to deposit chest
-            if goTo(223, 57, -406) then
+            if goTo(223, 67, -395) then
                 collectItems()
+                goTo(223, 67, -397)
+                goTo(223, 64, -397)
+                goTo(223, 64, -406)  
+                sendItemData()
+                depositItems()
                 goTo(223, 64, -406)
                 goTo(223, 64, -397)
                 goTo(223, 67, -397)
-                goTo(223, 67, -395)
-                sendItemData()
             end
         end
     end
 end
-
--- Run the main function
-main()
-
 
 -- Run the main function
 main()
