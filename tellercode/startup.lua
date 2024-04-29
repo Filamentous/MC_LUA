@@ -180,7 +180,7 @@ function startDepositProcess()
         local totalValue = 0
         for _, item in ipairs(items) do
             if itemValues[item.name] then
-                totalValue += itemValues[item.name] * item.count
+                totalValue = totalValue + (itemValues[item.name] * item.count)
             end
         end
         
