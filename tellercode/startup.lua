@@ -92,15 +92,15 @@ end
 -- Actions for each menu item
 function createNewCard()
     drawPinPad()
-    local cardNumber = handlePinPadInput()
-    monitor.write("pin: ", cardNumber)
+    local cardNum = handlePinPadInput()
+    monitor.write("pin: ", cardNum)
     rednet.open("back")
-    rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNumber}, "databaseQuery")
+    rednet.send(databaseID, {type = "createNewCard", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     monitor.clear()
     if response.success then
         monitor.setCursorPos(1, 1)
-        monitor.write("Card " .. cardNumber .. " created successfully!")
+        monitor.write("Card " .. cardNum .. " created successfully!")
         redstone.setOutput("bottom", true)
         sleep(1)
         redstone.setOutput("bottom", false)
@@ -116,9 +116,9 @@ end
 function enterCardNumber()
     monitor.clear()
     drawPinPad()
-    local cardNumber = handlePinPadInput()
+    local cardNum = handlePinPadInput()
     rednet.open("back")
-    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
+    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     monitor.clear()
     if response.exists then
@@ -142,11 +142,11 @@ function startDepositProcess()
     monitor.setCursorPos(1, 1)
     monitor.write("Enter your card number:")
     drawPinPad()
-    local cardNumber = handlePinPadInput()
-    monitor.write("Entered pin:", cardNumber)
+    local cardNum = handlePinPadInput()
+    monitor.write("Entered pin:", cardNum)
 
     -- Check if the card exists in the database
-    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNumber}, "databaseQuery")
+    rednet.send(databaseID, {type = "checkCard", cardNumber = cardNum}, "databaseQuery")
     local senderId, response = rednet.receive("databaseResponse")
     if not response.exists then
         monitor.write("Card number does not exist. Please try again.")
@@ -186,7 +186,7 @@ function startDepositProcess()
         end
         
         -- Update balance in the database
-        rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNumber}, "databaseQuery")
+        rednet.send(databaseID, {type = "updateBalance", amount = totalValue, playerID = cardNum}, "databaseQuery")
         monitor.setCursorPos(1, 2)
         monitor.write("Items processed and balance updated.")
         sleep(2)
