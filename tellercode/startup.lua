@@ -12,7 +12,7 @@ local itemValues = {
 function setupMonitor()
     monitor.clear()
     monitor.setTextScale(0.5)
-    monitor.setBackgroundColor(colors.black)
+    monitor.setBackgroundColor(colors.white)
 end
 
 function drawButton(x, y, width, height, text, bgColor)
@@ -36,7 +36,6 @@ function drawPinPad()
     local yPos = 4
     for i, key in ipairs(keys) do
         local xPos = 2 + ((i-1) % 3) * 10
-        if i > 9 then xPos = 12 end -- Adjust for bottom row
         if key == "Enter" then
             drawButton(xPos, yPos, 8, 3, key, colors.lime)  -- Make Enter key lime green for visibility
         else
@@ -70,6 +69,9 @@ function handlePinPadInput()
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
             monitor.write(pin)
+        end
+        if #pin == 4 then
+            return pin
         end
     end
 end
