@@ -201,7 +201,6 @@ function startDepositProcess()
                 monitor.write("Running total " .. totalValue)
             end
         end
-    end
 
         
         -- Update balance in the database
