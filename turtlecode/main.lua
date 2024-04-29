@@ -5,7 +5,7 @@ function move(steps, action, actionName)
     for i = 1, steps do
         action()
         print("Performed: " .. actionName .. " Step: " .. i)
-        sleep(0.85)  -- Sleep for half a second to allow the action to complete
+        sleep(0.85) 
     end
 end
 
