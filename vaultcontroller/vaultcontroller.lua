@@ -1,4 +1,4 @@
--- Vault Control System with Parallel Processing for Close Commands
+-- Vault Control System with Simplified Alarm and Control Logic
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
 local vaultChannel = "vaultQuery"
@@ -54,36 +54,24 @@ function closeVault()
     end
 end
 
--- Listen for close commands via RedNet
-function listenForCloseCommands()
-    while true do
-        local senderId, message, protocol = rednet.receive(vaultChannel)
-        if senderId == keypadID and message.action == "close" then
-            rednet.send(senderId, "success", responseChannel)
-            closeVault()
-            break
-        end
-    end
-end
-
--- Monitor for redstone signal to close vault from the top side
-function monitorRedstoneSignal()
-    while true do
-        if redstone.getInput(closeInputSide) then
-            closeVault()
-            break
-        end
-        sleep(0.5)  -- Check every half second
-    end
-end
-
 rednet.open(modemSide)
 while true do
-    parallel.waitForAny(listenForCloseCommands, monitorRedstoneSignal)  -- Handle either event
+    local senderId, message, protocol = rednet.receive(vaultChannel)
+    if senderId == keypadID then
+        if message.action == "close" then
+            rednet.send(senderId, "success", responseChannel)
+            closeVault()
+        elseif message.action == "enter" and message.pin == passcode then
+            rednet.send(senderId, "success", responseChannel)
+            openVault()
+        else
+            rednet.send(senderId, "failure", responseChannel)
+        end
+    end
 
-    -- Reset after handling close to wait for the next signal or command
-    if vaultState == "closed" then
-        sleep(10)  -- Delay to prevent rapid re-triggering
-        redstone.setOutput(closeInputSide, false)  -- Reset redstone input state if necessary
+    -- Check for redstone signal to close vault from the top side
+    sleep(60)
+    if redstone.getInput(closeInputSide) then
+        closeVault()
     end
 end
