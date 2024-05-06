@@ -70,8 +70,10 @@ while true do
     end
 
     -- Check for redstone signal to close vault from the top side
-    sleep(60)
-    if redstone.getInput(closeInputSide) then
-        closeVault()
+    if vaultState ~= "closed" then
+        sleep(60)
+        if redstone.getInput(closeInputSide) then
+            closeVault()
+        end
     end
 end
