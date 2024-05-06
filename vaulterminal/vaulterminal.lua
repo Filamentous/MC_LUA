@@ -19,12 +19,14 @@ end
 
 function drawPinPad()
     setupMonitor()
-    local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "Enter"}
+    local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "Clear", "0", "Enter", "Close Vault"}
     local yPos = 4
     for i, key in ipairs(keys) do
         local xPos = 2 + ((i-1) % 3) * 10
         if key == "Enter" then
             drawButton(xPos, yPos, 8, 3, key, colors.lime)
+        elseif key == "Close Vault" then
+            drawButton(xPos, yPos, 8, 3, key, colors.red)
         else
             drawButton(xPos, yPos, 8, 3, key, colors.green)
         end
@@ -40,7 +42,7 @@ function handlePinPadInput()
         local col = math.floor((x - 1) / 10)
         local index = row * 3 + col + 1
         if index > 9 then index = index + 3 end
-        local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter"}
+        local keys = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "", "0", "Clear", "Enter", "Close Vault"}
         local key = keys[index]
         if key == "Clear" then
             pin = ""
@@ -48,8 +50,10 @@ function handlePinPadInput()
             monitor.clearLine()
         elseif key == "Enter" then
             if #pin == 6 then  
-                return pin 
+                return pin, "enter"
             end
+        elseif key == "Close Vault" then
+            return "", "close"
         elseif key ~= "" and key ~= nil then
             pin = pin .. key
             monitor.setCursorPos(5, 19)
@@ -57,26 +61,29 @@ function handlePinPadInput()
             monitor.write(pin)
         end
         if #pin == 6 then
-            return pin
+            return pin, "enter"
         end
     end
 end
 
-function sendPinToVault(pin)
-    rednet.send(vaultChannel, pin)
+function sendPinToVault(pin, action)
+    rednet.send(3, {pin = pin, action = action}, vaultChannel)  -- Include action type in the message
     local id, message = rednet.receive(responseChannel, 10) -- wait for 10 seconds
+    monitor.setCursorPos(1, 20)
+    monitor.clearLine()
     if message == "success" then
-        print("Access Granted")
+        monitor.write("Access Granted")
     else
-        print("Access Denied")
+        monitor.write("Access Denied")
     end
 end
 
--- Main function to draw the pad and handle inputs
 function main()
-    drawPinPad()
-    local pin = handlePinPadInput()
-    sendPinToVault(pin)
+    while true do
+        drawPinPad()
+        local pin, action = handlePinPadInput()
+        sendPinToVault(pin, action)
+    end
 end
 
 main()

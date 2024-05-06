@@ -1,9 +1,9 @@
--- Vault Control System with Pulsing Door Mechanisms
+-- Vault Control System with Action Handling
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
 local vaultChannel = "vaultQuery"
 local responseChannel = "vaultResponse"
-local keypadID = 6
+local keypadID = 6  -- The ID of the terminal sending commands
 
 -- Define redstone sides for mechanisms
 local outerLockSide = "back"
@@ -24,40 +24,47 @@ end
 
 -- Function to handle opening sequence
 function openVault()
-    redstone.setOutput(outerLockSide, true)
-    sleep(2)
-    redstone.setOutput(alarmAndCloseSide, true)
-    sleep(2)
-    pulse(innerDoorSide)  -- Pulse the inner door
-    sleep(2)
-    pulse(outerDoorSide)  -- Pulse the outer door
-    sleep(2)
-    redstone.setOutput(alarmAndCloseSide, false)
-    vaultState = "open"
+    if vaultState ~= "open" then
+        redstone.setOutput(outerLockSide, true)
+        sleep(2)
+        redstone.setOutput(alarmAndCloseSide, true)
+        sleep(2)
+        pulse(innerDoorSide)  -- Pulse the inner door
+        sleep(2)
+        pulse(outerDoorSide)  -- Pulse the outer door
+        sleep(2)
+        redstone.setOutput(alarmAndCloseSide, false)
+        vaultState = "open"
+    end
 end
 
 -- Function to handle closing sequence
 function closeVault()
-    redstone.setOutput(reverserGearSide, true)
-    pulse(outerDoorSide)  -- Pulse the outer door
-    sleep(2)
-    pulse(innerDoorSide)  -- Pulse the inner door
-    sleep(2)
-    redstone.setOutput(alarmAndCloseSide, true)
-    sleep(2)
-    redstone.setOutput(outerLockSide, false)
-    sleep(2)
-    redstone.setOutput(reverserGearSide, false)
-    vaultState = "closed"
+    if vaultState ~= "closed" then
+        redstone.setOutput(reverserGearSide, true)
+        pulse(outerDoorSide)  -- Pulse the outer door
+        sleep(2)
+        pulse(innerDoorSide)  -- Pulse the inner door
+        sleep(2)
+        redstone.setOutput(alarmAndCloseSide, true)
+        sleep(2)
+        redstone.setOutput(outerLockSide, false)
+        sleep(2)
+        redstone.setOutput(reverserGearSide, false)
+        vaultState = "closed"
+    end
 end
 
 rednet.open(modemSide)
 while true do
     local senderId, message, protocol = rednet.receive(vaultChannel)
     if senderId == keypadID then
-        if message == passcode then
+        if message.action == "enter" and message.pin == passcode then
             rednet.send(senderId, "success", responseChannel)
             openVault()
+        elseif message.action == "close" then
+            rednet.send(senderId, "success", responseChannel)
+            closeVault()
         else
             rednet.send(senderId, "failure", responseChannel)
         end
