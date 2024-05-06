@@ -1,4 +1,4 @@
--- Vault Control System with Action Handling
+-- Vault Control System with Simplified Alarm and Control Logic
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
 local vaultChannel = "vaultQuery"
@@ -10,7 +10,7 @@ local outerLockSide = "back"
 local outerDoorSide = "right"
 local innerDoorSide = "left"
 local reverserGearSide = "front"
-local alarmAndCloseSide = "top"
+local closeInputSide = "top"  -- Used for closing the vault
 
 -- Control the state of the vault
 local vaultState = "closed"  -- could also be "open" or "opening"
@@ -25,15 +25,15 @@ end
 -- Function to handle opening sequence
 function openVault()
     if vaultState ~= "open" then
-        redstone.setOutput(outerLockSide, true)
-        sleep(2)
-        redstone.setOutput(alarmAndCloseSide, true)
+        redstone.setOutput(reverserGearSide, false)
+        redstone.setOutput(outerLockSide, false)  -- Disengage lock to start opening
         sleep(2)
         pulse(innerDoorSide)  -- Pulse the inner door
         sleep(2)
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
-        redstone.setOutput(alarmAndCloseSide, false)
+        redstone.setOutput(outerLockSide, true)  -- Re-engage lock after opening
+        redstone.setOutput(reverserGearSide, true)
         vaultState = "open"
     end
 end
@@ -42,14 +42,13 @@ end
 function closeVault()
     if vaultState ~= "closed" then
         redstone.setOutput(reverserGearSide, true)
+        redstone.setOutput(outerLockSide, false)  -- Disengage lock to start closing
+        sleep(2)
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
         pulse(innerDoorSide)  -- Pulse the inner door
         sleep(2)
-        redstone.setOutput(alarmAndCloseSide, true)
-        sleep(2)
-        redstone.setOutput(outerLockSide, false)
-        sleep(2)
+        redstone.setOutput(outerLockSide, true)  -- Re-engage lock after closing
         redstone.setOutput(reverserGearSide, false)
         vaultState = "closed"
     end
@@ -70,8 +69,8 @@ while true do
         end
     end
 
-    -- Check for redstone signal to close vault
-    if redstone.getInput(alarmAndCloseSide) then
+    -- Check for redstone signal to close vault from the top side
+    if redstone.getInput(closeInputSide) then
         closeVault()
     end
 end
