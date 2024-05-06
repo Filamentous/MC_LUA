@@ -1,8 +1,8 @@
 local monitor = peripheral.wrap("top")
 local modemSide = "right"
 rednet.open(modemSide)
-local vaultChannel = 1
-local responseChannel = 2
+local vaultChannel = "vaultQuery"
+local responseChannel = "vaultResponse"
 
 function setupMonitor()
     monitor.clear()

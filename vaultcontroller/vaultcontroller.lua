@@ -1,8 +1,9 @@
 -- Vault Control System with Pulsing Door Mechanisms
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
-local vaultChannel = 1
-local responseChannel = 2
+local vaultChannel = "vaultQuery"
+local responseChannel = "vaultResponse"
+local keypadID = 6
 
 -- Define redstone sides for mechanisms
 local outerLockSide = "back"
@@ -52,12 +53,14 @@ end
 
 rednet.open(modemSide)
 while true do
-    local senderId, message, protocol = rednet.receive()
-    if message == passcode then
-        rednet.send(senderId, "success", responseChannel)
-        openVault()
-    else
-        rednet.send(senderId, "failure", responseChannel)
+    local senderId, message, protocol = rednet.receive(vaultChannel)
+    if senderId == keypadID then
+        if message == passcode then
+            rednet.send(senderId, "success", responseChannel)
+            openVault()
+        else
+            rednet.send(senderId, "failure", responseChannel)
+        end
     end
 
     -- Check for redstone signal to close vault
