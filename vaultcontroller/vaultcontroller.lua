@@ -1,4 +1,4 @@
--- Vault Control System with Simplified Alarm and Control Logic
+-- Vault Control System with Parallel Processing for Close Commands
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
 local vaultChannel = "vaultQuery"
@@ -54,23 +54,36 @@ function closeVault()
     end
 end
 
-rednet.open(modemSide)
-while true do
-    local senderId, message, protocol = rednet.receive(vaultChannel)
-    if senderId == keypadID then
-        if message.action == "enter" and message.pin == passcode then
-            rednet.send(senderId, "success", responseChannel)
-            openVault()
-        elseif message.action == "close" then
+-- Listen for close commands via RedNet
+function listenForCloseCommands()
+    while true do
+        local senderId, message, protocol = rednet.receive(vaultChannel)
+        if senderId == keypadID and message.action == "close" then
             rednet.send(senderId, "success", responseChannel)
             closeVault()
-        else
-            rednet.send(senderId, "failure", responseChannel)
+            break
         end
     end
+end
 
-    -- Check for redstone signal to close vault from the top side
-    if redstone.getInput(closeInputSide) then
-        closeVault()
+-- Monitor for redstone signal to close vault from the top side
+function monitorRedstoneSignal()
+    while true do
+        if redstone.getInput(closeInputSide) then
+            closeVault()
+            break
+        end
+        sleep(0.5)  -- Check every half second
+    end
+end
+
+rednet.open(modemSide)
+while true do
+    parallel.waitForAny(listenForCloseCommands, monitorRedstoneSignal)  -- Handle either event
+
+    -- Reset after handling close to wait for the next signal or command
+    if vaultState == "closed" then
+        sleep(10)  -- Delay to prevent rapid re-triggering
+        redstone.setOutput(closeInputSide, false)  -- Reset redstone input state if necessary
     end
 end
