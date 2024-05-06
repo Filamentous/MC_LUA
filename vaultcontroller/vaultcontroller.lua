@@ -26,13 +26,13 @@ end
 function openVault()
     if vaultState ~= "open" then
         redstone.setOutput(reverserGearSide, false)
-        redstone.setOutput(outerLockSide, false)  -- Disengage lock to start opening
+        redstone.setOutput(outerLockSide, true)  -- Disengage lock to start opening
         sleep(2)
         pulse(innerDoorSide)  -- Pulse the inner door
         sleep(2)
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
-        redstone.setOutput(outerLockSide, true)  -- Re-engage lock after opening
+        redstone.setOutput(outerLockSide, false)  -- Re-engage lock after opening
         redstone.setOutput(reverserGearSide, true)
         vaultState = "open"
     end
@@ -42,13 +42,13 @@ end
 function closeVault()
     if vaultState ~= "closed" then
         redstone.setOutput(reverserGearSide, true)
-        redstone.setOutput(outerLockSide, false)  -- Disengage lock to start closing
+        redstone.setOutput(outerLockSide, true)  -- Disengage lock to start closing
         sleep(2)
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
         pulse(innerDoorSide)  -- Pulse the inner door
         sleep(2)
-        redstone.setOutput(outerLockSide, true)  -- Re-engage lock after closing
+        redstone.setOutput(outerLockSide, false)  -- Re-engage lock after closing
         redstone.setOutput(reverserGearSide, false)
         vaultState = "closed"
     end
