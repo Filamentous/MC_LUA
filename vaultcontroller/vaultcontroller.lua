@@ -88,6 +88,8 @@ while true do
     -- Check for redstone signal to close vault from the top side
     if redstone.getInput(closeInputSide) and vaultState ~= "open" then
         print("Redstone signal detected for closing.")
+        redstone.setOutput(outerLockSide, true)
+        sleep(5)
         print("Attempting to close vault...")
         closeVault()
     end
