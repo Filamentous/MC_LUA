@@ -1,4 +1,4 @@
--- Vault Control System with Simplified Alarm and Control Logic
+-- Vault Control System with Command Logging and Message Reception Feedback
 local modemSide = "bottom"  -- The side where the modem is connected
 local passcode = "123456"  -- Static 6-digit passcode
 local vaultChannel = "vaultQuery"
@@ -25,6 +25,7 @@ end
 -- Function to handle opening sequence
 function openVault()
     if vaultState ~= "open" then
+        print("Opening vault...")
         redstone.setOutput(reverserGearSide, false)
         redstone.setOutput(outerLockSide, true)  -- Disengage lock to start opening
         sleep(2)
@@ -35,12 +36,14 @@ function openVault()
         redstone.setOutput(outerLockSide, false)  -- Re-engage lock after opening
         redstone.setOutput(reverserGearSide, true)
         vaultState = "open"
+        print("Vault is now open.")
     end
 end
 
 -- Function to handle closing sequence
 function closeVault()
     if vaultState ~= "closed" then
+        print("Closing vault...")
         redstone.setOutput(reverserGearSide, true)
         redstone.setOutput(outerLockSide, true)  -- Disengage lock to start closing
         sleep(2)
@@ -51,29 +54,32 @@ function closeVault()
         redstone.setOutput(outerLockSide, false)  -- Re-engage lock after closing
         redstone.setOutput(reverserGearSide, false)
         vaultState = "closed"
+        print("Vault is now closed.")
     end
 end
 
 rednet.open(modemSide)
 while true do
     local senderId, message, protocol = rednet.receive(vaultChannel)
+    print("Received message from ID " .. senderId .. ": " .. textutils.serialize(message))
     if senderId == keypadID then
         if message.action == "close" then
+            print("Processing close command...")
             rednet.send(senderId, "success", responseChannel)
             closeVault()
         elseif message.action == "enter" and message.pin == passcode then
+            print("Processing enter command...")
             rednet.send(senderId, "success", responseChannel)
             openVault()
         else
+            print("Invalid command or incorrect passcode.")
             rednet.send(senderId, "failure", responseChannel)
         end
     end
 
     -- Check for redstone signal to close vault from the top side
-    if vaultState ~= "open" then
-        sleep(60)
-        if redstone.getInput(closeInputSide) then
-            closeVault()
-        end
+    if redstone.getInput(closeInputSide) and vaultState ~= "open" then
+        print("Redstone signal detected for closing.")
+        closeVault()
     end
 end
