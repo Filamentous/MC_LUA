@@ -40,21 +40,25 @@ function openVault()
     end
 end
 
--- Function to handle closing sequence
 function closeVault()
     if vaultState ~= "closed" then
         print("Closing vault...")
-        redstone.setOutput(reverserGearSide, true)
+        print("Disengaging lock...")
         redstone.setOutput(outerLockSide, true)  -- Disengage lock to start closing
         sleep(2)
+        print("Pulsing outer door...")
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
+        print("Pulsing inner door...")
         pulse(innerDoorSide)  -- Pulse the inner door
         sleep(2)
+        print("Re-engaging lock...")
         redstone.setOutput(outerLockSide, false)  -- Re-engage lock after closing
         redstone.setOutput(reverserGearSide, false)
         vaultState = "closed"
         print("Vault is now closed.")
+    else
+        print("Vault already in 'closed' state.")
     end
 end
 
@@ -84,6 +88,7 @@ while true do
     -- Check for redstone signal to close vault from the top side
     if redstone.getInput(closeInputSide) and vaultState ~= "open" then
         print("Redstone signal detected for closing.")
+        print("Attempting to close vault...")
         closeVault()
     end
 end
