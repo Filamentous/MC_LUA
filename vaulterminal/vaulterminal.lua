@@ -53,13 +53,12 @@ function handlePinPadInput()
                 return pin, "enter"
             end
         elseif key == "Close Vault" then
-            rednet.send(3, {action="close"}, vaultChannel)
-            return "", "close"
+            return pin, "close"
         elseif key ~= "" and key ~= nil then
             pin = pin .. key
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
-            monitor.write(pin)
+            monitor.write(("*" * #pin))
         end
         if #pin == 6 then
             return pin, "enter"

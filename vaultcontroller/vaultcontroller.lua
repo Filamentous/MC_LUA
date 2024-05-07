@@ -60,7 +60,7 @@ end
 
 rednet.open(modemSide)
 while true do
-    local senderId, message, protocol = rednet.receive(vaultChannel)
+    local senderId, message, protocol = rednet.receive(vaultChannel, 10)
     print("Received message from ID " .. senderId .. ": " .. textutils.serialize(message))
     if senderId == keypadID then
         if message.action == "close" then
@@ -79,7 +79,9 @@ while true do
 
     -- Check for redstone signal to close vault from the top side
     if redstone.getInput(closeInputSide) and vaultState ~= "open" then
-        print("Redstone signal detected for closing.")
+        print("Redstone signal detected for closing in 10")
+        redstone.setOutput(outerLockSide, true)
+        sleep(5)
         closeVault()
     end
 end
