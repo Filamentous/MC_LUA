@@ -60,28 +60,30 @@ end
 
 rednet.open(modemSide)
 while true do
-    local senderId, message, protocol = rednet.receive(vaultChannel, 10)
-    print("Received message from ID " .. senderId .. ": " .. textutils.serialize(message))
-    if senderId == keypadID then
-        if message.action == "close" then
-            print("Processing close command...")
-            rednet.send(senderId, "success", responseChannel)
-            closeVault()
-        elseif message.action == "enter" and message.pin == passcode then
-            print("Processing enter command...")
-            rednet.send(senderId, "success", responseChannel)
-            openVault()
-        else
-            print("Invalid command or incorrect passcode.")
-            rednet.send(senderId, "failure", responseChannel)
+    local senderId, message, protocol = rednet.receive(vaultChannel, 10)  -- 10-second timeout
+    if senderId and message then
+        print("Received message from ID " .. senderId .. ": " .. textutils.serialize(message))
+        if senderId == keypadID then
+            if message.action == "close" then
+                print("Processing close command...")
+                rednet.send(senderId, "success", responseChannel)
+                closeVault()
+            elseif message.action == "enter" and message.pin == passcode then
+                print("Processing enter command...")
+                rednet.send(senderId, "success", responseChannel)
+                openVault()
+            else
+                print("Invalid command or incorrect passcode.")
+                rednet.send(senderId, "failure", responseChannel)
+            end
         end
+    else
+        print("No message received in the last 10 seconds.")
     end
 
     -- Check for redstone signal to close vault from the top side
     if redstone.getInput(closeInputSide) and vaultState ~= "open" then
-        print("Redstone signal detected for closing in 10")
-        redstone.setOutput(outerLockSide, true)
-        sleep(5)
+        print("Redstone signal detected for closing.")
         closeVault()
     end
 end
