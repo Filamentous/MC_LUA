@@ -58,7 +58,7 @@ function handlePinPadInput()
             pin = pin .. key
             monitor.setCursorPos(5, 19)
             monitor.clearLine()
-            monitor.write(("*" * #pin))
+            monitor.write("*")
         end
         if #pin == 6 then
             return pin, "enter"
