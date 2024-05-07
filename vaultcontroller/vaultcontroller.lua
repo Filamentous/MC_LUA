@@ -45,7 +45,7 @@ function closeVault()
         print("Closing vault...")
         print("Disengaging lock...")
         redstone.setOutput(outerLockSide, true)  -- Disengage lock to start closing
-        sleep(2)
+        sleep(5)
         print("Pulsing outer door...")
         pulse(outerDoorSide)  -- Pulse the outer door
         sleep(2)
@@ -88,10 +88,6 @@ while true do
     -- Check for redstone signal to close vault from the top side
     if redstone.getInput(closeInputSide) and vaultState ~= "open" then
         print("Redstone signal detected for closing.")
-        if vaultState ~= "closed" then
-            redstone.setOutput(outerLockSide, true)
-        end
-        sleep(5)
         print("Attempting to close vault...")
         closeVault()
     end
